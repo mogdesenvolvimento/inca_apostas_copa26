@@ -68,7 +68,7 @@ export function ApostasClient() {
           setMessage(data.message ?? publicCopy.bets.noTodayMatches);
         }
       })
-      .catch(() => setError("Não foi possível carregar os jogos do dia. Tente novamente."))
+      .catch(() => setError("Não deu pra carregar os jogos do dia. Tenta de novo."))
       .finally(() => setLoading(false));
   }, []);
 
@@ -110,7 +110,7 @@ export function ApostasClient() {
     setSubmitting(false);
 
     if (!response.ok) {
-      setError(data.error ?? "Não foi possível registrar seus palpites.");
+      setError(data.error ?? "Não deu pra registrar teus palpites.");
       return;
     }
 
@@ -139,14 +139,12 @@ export function ApostasClient() {
       <div className="rounded-[2rem] border border-white/70 bg-white/86 p-6 shadow-card">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-sm font-bold uppercase tracking-[0.2em] text-teal">
-              {publicCopy.bets.greetingPrefix}, {participantName}
-            </p>
-            <h1 className="mt-3 font-display text-3xl font-bold text-ink">{publicCopy.bets.title}</h1>
+            <p className="font-display-accent text-sm text-teal">{publicCopy.bets.greetingPrefix}, {participantName}</p>
+            <h1 className="font-heading mt-3 text-3xl font-bold text-ink">{publicCopy.bets.title}</h1>
             <p className="mt-3 max-w-2xl text-sm text-ink/70">{publicCopy.bets.subtitle}</p>
           </div>
-          <div className="hidden rounded-[1.4rem] bg-cream p-2 shadow-md sm:block">
-            <IncaLogo size={64} />
+          <div className="hidden rounded-[1.4rem] bg-white p-2.5 shadow-md sm:block">
+            <IncaLogo size={68} />
           </div>
         </div>
       </div>

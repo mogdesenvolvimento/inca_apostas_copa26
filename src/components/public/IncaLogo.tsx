@@ -7,7 +7,9 @@ export function IncaLogo({ size = 84, className = "" }: { size?: number; classNa
       alt="Logo do Inca Bar"
       width={size}
       height={size}
-      className={`aspect-square h-auto w-auto object-contain ${className}`}
+      sizes={`${size}px`}
+      unoptimized
+      className={`block aspect-square h-auto w-auto object-contain object-center ${className}`}
       priority
     />
   );

@@ -6,17 +6,15 @@ import { publicCopy } from "@/lib/copy";
 export default function HomePage() {
   return (
     <PublicShell>
-      <PublicHeader eyebrow="A torcida do Inca também passa pelos seus palpites." />
+      <PublicHeader eyebrow="A torcida do Inca também passa pelos teus palpites." />
       <section className="overflow-hidden rounded-[2rem] border border-white/60 bg-white/78 p-7 shadow-card backdrop-blur sm:p-10">
         <div className="mb-5 flex items-center justify-between gap-4">
-          <p className="inline-flex rounded-full bg-teal/12 px-4 py-2 text-sm font-bold text-teal">
+          <p className="font-display-accent inline-flex rounded-full bg-teal/12 px-4 py-2 text-sm text-teal">
             {publicCopy.home.badge}
           </p>
           <div className="hidden h-12 w-12 rounded-2xl bg-gradient-to-br from-wine via-amber to-navy sm:block" />
         </div>
-        <h1 className="max-w-2xl font-display text-4xl font-bold leading-tight text-ink sm:text-6xl">
-          {publicCopy.home.title}
-        </h1>
+        <h1 className="font-heading max-w-2xl text-4xl font-bold text-ink sm:text-6xl">{publicCopy.home.title}</h1>
         <p className="mt-5 max-w-2xl text-xl leading-relaxed text-ink/78">{publicCopy.home.subtitle}</p>
         <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink/68">{publicCopy.home.supporting}</p>
         <div className="mt-7 rounded-[1.5rem] border border-wine/10 bg-graphite px-5 py-4 text-sm leading-relaxed text-white/80">

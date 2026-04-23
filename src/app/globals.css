@@ -37,3 +37,23 @@ button,
 select {
   font: inherit;
 }
+
+.font-beyno {
+  font-family: var(--font-beyno), "Trebuchet MS", Verdana, sans-serif;
+  letter-spacing: 0.03em;
+}
+
+.font-display-accent {
+  font-family: var(--font-beyno), "Trebuchet MS", Verdana, sans-serif;
+  letter-spacing: 0.03em;
+}
+
+.font-heading {
+  font-family: Georgia, Cambria, "Times New Roman", serif;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+
+.font-body {
+  font-family: "Trebuchet MS", Verdana, sans-serif;
+}

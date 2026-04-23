@@ -71,7 +71,7 @@ export function CadastroForm() {
       </label>
       {error ? <p className="rounded-2xl bg-wine/10 p-3 text-sm font-bold text-wine">{error}</p> : null}
       <PrimaryButton type="submit" disabled={loading} className="w-full">
-        {loading ? "Liberando seus jogos..." : publicCopy.home.cta}
+        {loading ? publicCopy.register.submitLoading : publicCopy.register.submit}
       </PrimaryButton>
     </form>
   );
