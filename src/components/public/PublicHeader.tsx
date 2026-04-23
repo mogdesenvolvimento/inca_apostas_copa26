@@ -8,8 +8,8 @@ export function PublicHeader({ eyebrow }: { eyebrow?: string }) {
         <p className="font-display text-2xl font-bold leading-tight">Copa 2026</p>
         {eyebrow ? <p className="mt-1 text-sm text-white/70">{eyebrow}</p> : null}
       </div>
-      <div className="rounded-[1.4rem] bg-white/95 p-2 shadow-lg">
-        <IncaLogo size={72} />
+      <div className="flex h-[88px] w-[88px] items-center justify-center rounded-[1.6rem] bg-white/98 p-3 shadow-lg ring-1 ring-black/5">
+        <IncaLogo size={64} className="max-h-full max-w-full" />
       </div>
     </div>
   );
