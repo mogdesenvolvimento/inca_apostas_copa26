@@ -1,14 +1,16 @@
 import { PublicShell } from "@/components/PublicShell";
+import { PublicHeader } from "@/components/public/PublicHeader";
 import { CadastroForm } from "@/components/public/CadastroForm";
+import { publicCopy } from "@/lib/copy";
 
 export default function CadastroPage() {
   return (
     <PublicShell>
-      <section className="rounded-[2rem] border border-white/70 bg-white/80 p-6 shadow-card backdrop-blur sm:p-9">
-        <h1 className="font-display text-3xl font-bold text-ink sm:text-5xl">Cadastro</h1>
-        <p className="mt-3 text-ink/70">
-          Usaremos seu telefone apenas para identificar seu cadastro e impedir palpites duplicados.
-        </p>
+      <PublicHeader eyebrow="Cadastro rápido para liberar seus jogos do dia." />
+      <section className="rounded-[2rem] border border-white/70 bg-white/82 p-6 shadow-card backdrop-blur sm:p-9">
+        <p className="text-sm font-bold uppercase tracking-[0.22em] text-wine">{publicCopy.register.hint}</p>
+        <h1 className="mt-3 font-display text-3xl font-bold text-ink sm:text-5xl">{publicCopy.register.title}</h1>
+        <p className="mt-3 max-w-xl text-ink/70">{publicCopy.register.subtitle}</p>
         <CadastroForm />
       </section>
     </PublicShell>

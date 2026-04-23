@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
+import { stateMessages } from "@/lib/copy";
 import { getParticipantMatchBetStatusFromData } from "@/lib/matches";
+import { prisma } from "@/lib/prisma";
 import { validateScore } from "@/lib/validation";
 
 type BetInput = {
@@ -42,7 +43,7 @@ export async function submitBets(
   }
 
   if (!bets.length) {
-    throw new Error("Selecione ao menos uma aposta válida.");
+    throw new Error("Selecione ao menos um palpite válido.");
   }
 
   const normalizedBets = bets.map((bet) => ({
@@ -68,11 +69,11 @@ export async function submitBets(
 
     const status = getParticipantMatchBetStatusFromData(match, Boolean(existing), now);
     if (status === "already_bet") {
-      throw new Error("Sua aposta para este jogo já foi registrada.");
+      throw new Error(stateMessages.alreadyRegistered);
     }
 
     if (status === "closed") {
-      throw new Error("As apostas para os jogos de hoje já foram encerradas.");
+      throw new Error(stateMessages.closedToday);
     }
   }
 
@@ -92,7 +93,7 @@ export async function submitBets(
     );
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-      throw new Error("Sua aposta para este jogo já foi registrada.");
+      throw new Error(stateMessages.alreadyRegistered);
     }
 
     throw error;

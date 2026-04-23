@@ -13,10 +13,23 @@
 body {
   margin: 0;
   background:
-    radial-gradient(circle at top left, rgba(230, 180, 80, 0.22), transparent 34rem),
-    linear-gradient(135deg, #fff9ec 0%, #f4ead4 52%, #edf2de 100%);
-  color: #17211b;
+    radial-gradient(circle at top left, rgba(230, 148, 59, 0.24), transparent 28rem),
+    radial-gradient(circle at top right, rgba(18, 166, 162, 0.18), transparent 26rem),
+    linear-gradient(150deg, #f7f2e8 0%, #f4e0c1 42%, #e9eef6 100%);
+  color: #1f2430;
   font-family: "Trebuchet MS", Verdana, sans-serif;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 22px 22px;
+  opacity: 0.35;
 }
 
 input,

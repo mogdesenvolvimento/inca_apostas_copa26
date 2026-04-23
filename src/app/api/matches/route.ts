@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { stateMessages } from "@/lib/copy";
 import { getParticipantMatchBetStatusFromData } from "@/lib/matches";
+import { prisma } from "@/lib/prisma";
 import { getSaoPauloDateString } from "@/lib/timezone";
 
 export async function GET(request: Request) {
@@ -15,6 +16,7 @@ export async function GET(request: Request) {
     },
     orderBy: [{ kickoffAt: "asc" }, { homeTeam: "asc" }]
   });
+
   const firstMatch = await prisma.match.findFirst({
     where: { isActive: true },
     orderBy: { matchDate: "asc" }
@@ -32,7 +34,12 @@ export async function GET(request: Request) {
 
   return NextResponse.json({
     today,
-    message: buildMatchesMessage(today, matches.length, matches.some((match) => getParticipantMatchBetStatusFromData(match, Boolean(betByMatch.get(match.id))) === "available"), firstMatch?.matchDate),
+    message: buildMatchesMessage(
+      today,
+      matches.length,
+      matches.some((match) => getParticipantMatchBetStatusFromData(match, Boolean(betByMatch.get(match.id))) === "available"),
+      firstMatch?.matchDate
+    ),
     matches: matches.map((match) => {
       const existingBet = betByMatch.get(match.id);
       return {
@@ -46,15 +53,15 @@ export async function GET(request: Request) {
 
 function buildMatchesMessage(today: string, matchCount: number, hasAvailable: boolean, firstMatchDate?: string) {
   if (!matchCount && firstMatchDate && today < firstMatchDate) {
-    return "As apostas para estes jogos ainda não estão liberadas.";
+    return stateMessages.notOpenYet;
   }
 
   if (!matchCount) {
-    return "Hoje não há jogos disponíveis para aposta.";
+    return stateMessages.noMatches;
   }
 
   if (!hasAvailable) {
-    return "As apostas para os jogos de hoje já foram encerradas.";
+    return stateMessages.closedToday;
   }
 
   return null;

@@ -5,18 +5,24 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: "#17211b",
-        field: "#f7f0df",
-        leaf: "#315c3b",
-        gold: "#e6b450",
-        clay: "#bd5a3a"
+        ink: "#1f2430",
+        field: "#f7f2e8",
+        leaf: "#12a6a2",
+        gold: "#e8943b",
+        clay: "#a6344a",
+        navy: "#355e86",
+        amber: "#e8943b",
+        wine: "#a6344a",
+        teal: "#12a6a2",
+        cream: "#f7f2e8",
+        graphite: "#1f2430"
       },
       fontFamily: {
         display: ["Georgia", "Cambria", "serif"],
         body: ["Trebuchet MS", "Verdana", "sans-serif"]
       },
       boxShadow: {
-        card: "0 18px 60px rgba(23, 33, 27, 0.14)"
+        card: "0 24px 70px rgba(31, 36, 48, 0.16)"
       }
     }
   },

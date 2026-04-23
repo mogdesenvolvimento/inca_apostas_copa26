@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PrimaryButton } from "@/components/PrimaryButton";
+import { publicCopy } from "@/lib/copy";
 
 function maskPhone(value: string) {
   const digits = value.replace(/\D/g, "").slice(0, 11);
@@ -48,13 +49,13 @@ export function CadastroForm() {
   return (
     <form onSubmit={onSubmit} className="mt-6 space-y-4">
       <label className="block">
-        <span className="mb-2 block font-bold text-ink">Nome completo</span>
+        <span className="mb-2 block font-bold text-ink">Seu nome</span>
         <input
           value={name}
           onChange={(event) => setName(event.target.value)}
           required
-          className="w-full rounded-2xl border border-leaf/20 bg-field px-4 py-4 text-lg outline-none ring-leaf/30 transition focus:ring-4"
-          placeholder="Seu nome"
+          className="w-full rounded-2xl border border-teal/20 bg-field px-4 py-4 text-lg outline-none ring-teal/30 transition focus:ring-4"
+          placeholder="Como você quer aparecer na torcida"
         />
       </label>
       <label className="block">
@@ -64,13 +65,13 @@ export function CadastroForm() {
           onChange={(event) => setPhone(maskPhone(event.target.value))}
           required
           inputMode="tel"
-          className="w-full rounded-2xl border border-leaf/20 bg-field px-4 py-4 text-lg outline-none ring-leaf/30 transition focus:ring-4"
+          className="w-full rounded-2xl border border-teal/20 bg-field px-4 py-4 text-lg outline-none ring-teal/30 transition focus:ring-4"
           placeholder="(11) 99999-9999"
         />
       </label>
-      {error ? <p className="rounded-2xl bg-clay/10 p-3 text-sm font-bold text-clay">{error}</p> : null}
+      {error ? <p className="rounded-2xl bg-wine/10 p-3 text-sm font-bold text-wine">{error}</p> : null}
       <PrimaryButton type="submit" disabled={loading} className="w-full">
-        {loading ? "Continuando..." : "Continuar"}
+        {loading ? "Liberando seus jogos..." : publicCopy.home.cta}
       </PrimaryButton>
     </form>
   );

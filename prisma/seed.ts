@@ -4,7 +4,16 @@ import { zonedDateTimeToUtc } from "../src/lib/timezone";
 
 const prisma = new PrismaClient();
 
-const matches = [
+const testMatches = [
+  { group: "Testes Inca", date: "2026-04-23", time: "12:00", home: "Brasil", away: "Colômbia" },
+  { group: "Testes Inca", date: "2026-04-23", time: "16:30", home: "Argentina", away: "Uruguai" },
+  { group: "Testes Inca", date: "2026-04-23", time: "21:00", home: "Espanha", away: "França" },
+  { group: "Testes Inca", date: "2026-04-24", time: "11:30", home: "México", away: "Chile" },
+  { group: "Testes Inca", date: "2026-04-24", time: "15:00", home: "Alemanha", away: "Japão" },
+  { group: "Testes Inca", date: "2026-04-24", time: "20:30", home: "Portugal", away: "Inglaterra" }
+];
+
+const officialMatches = [
   { group: "Grupo A", date: "2026-06-11", time: "16:00", home: "México", away: "África do Sul" },
   { group: "Grupo A", date: "2026-06-11", time: "19:00", home: "Guadalajara Coreia do Sul", away: "Rep. Checa" },
   { group: "Grupo A", date: "2026-06-18", time: "13:00", home: "Rep. Checa", away: "África do Sul" },
@@ -77,6 +86,8 @@ const matches = [
   { group: "Grupo L", date: "2026-06-27", time: "18:00", home: "Panamá", away: "Inglaterra" },
   { group: "Grupo L", date: "2026-06-27", time: "18:00", home: "Croácia", away: "Gana" }
 ];
+
+const matches = [...testMatches, ...officialMatches];
 
 async function main() {
   const adminEmail = process.env.ADMIN_EMAIL ?? "admin@inca.local";

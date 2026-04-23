@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { findOrCreateParticipantByPhone } from "@/services/participants";
+import { publicCopy } from "@/lib/copy";
 import { jsonError, readJson } from "@/lib/http";
+import { findOrCreateParticipantByPhone } from "@/services/participants";
 
 type Body = {
   name?: string;
@@ -15,9 +16,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       participant: result.participant,
       created: result.created,
-      message: result.created
-        ? null
-        : "Encontramos seu cadastro anterior. Você poderá visualizar suas apostas já registradas e apostar apenas nos jogos ainda disponíveis."
+      message: result.created ? null : publicCopy.participantFound
     });
   } catch (error) {
     return jsonError(error instanceof Error ? error.message : "Não foi possível continuar.");
