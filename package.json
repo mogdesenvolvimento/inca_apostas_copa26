@@ -2,11 +2,15 @@
   "name": "inca-apostas-copa26",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
     "dev": "next dev",
     "postinstall": "prisma generate",
     "build": "next build",
-    "start": "node .next/standalone/server.js",
+    "postbuild": "node scripts/prepare-standalone.cjs",
+    "start": "node scripts/start-standalone.cjs",
     "railway:start": "npm run db:init && npm run seed && npm start",
     "lint": "next lint",
     "test": "vitest run",

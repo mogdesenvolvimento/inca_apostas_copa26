@@ -1,6 +1,24 @@
 import { PrismaClient } from "@prisma/client";
+import fs from "node:fs";
+import path from "node:path";
 
+ensureSqliteDirectory();
 const prisma = new PrismaClient();
+
+function ensureSqliteDirectory() {
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl?.startsWith("file:")) {
+    return;
+  }
+
+  const filePath = databaseUrl.replace(/^file:/, "");
+  if (!filePath || filePath === ":memory:") {
+    return;
+  }
+
+  const resolvedPath = path.isAbsolute(filePath) ? filePath : path.resolve(process.cwd(), "prisma", filePath);
+  fs.mkdirSync(path.dirname(resolvedPath), { recursive: true });
+}
 
 async function main() {
   await prisma.$executeRawUnsafe("PRAGMA foreign_keys=ON;");
