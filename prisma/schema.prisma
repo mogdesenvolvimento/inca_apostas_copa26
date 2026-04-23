@@ -1,0 +1,56 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Participant {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String   @unique
+  createdAt DateTime @default(now())
+  bets      Bet[]
+}
+
+model Match {
+  id        String   @id @default(cuid())
+  groupName String
+  matchDate String
+  matchTime String
+  kickoffAt DateTime
+  homeTeam  String
+  awayTeam  String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  bets      Bet[]
+
+  @@index([matchDate])
+  @@index([groupName])
+}
+
+model Bet {
+  id              String      @id @default(cuid())
+  participantId   String
+  matchId         String
+  homeScoreGuess  Int
+  awayScoreGuess  Int
+  submittedAt     DateTime    @default(now())
+  participant     Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  match           Match       @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@unique([participantId, matchId])
+  @@index([matchId])
+  @@index([participantId])
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String   @default("admin")
+  createdAt    DateTime @default(now())
+}

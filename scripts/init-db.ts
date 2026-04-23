@@ -1,0 +1,66 @@
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
+
+async function main() {
+  await prisma.$executeRawUnsafe("PRAGMA foreign_keys=ON;");
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS Participant (
+      id TEXT NOT NULL PRIMARY KEY,
+      name TEXT NOT NULL,
+      phone TEXT NOT NULL UNIQUE,
+      createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS Match (
+      id TEXT NOT NULL PRIMARY KEY,
+      groupName TEXT NOT NULL,
+      matchDate TEXT NOT NULL,
+      matchTime TEXT NOT NULL,
+      kickoffAt DATETIME NOT NULL,
+      homeTeam TEXT NOT NULL,
+      awayTeam TEXT NOT NULL,
+      isActive BOOLEAN NOT NULL DEFAULT 1,
+      createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+  await prisma.$executeRawUnsafe("CREATE INDEX IF NOT EXISTS Match_matchDate_idx ON Match(matchDate);");
+  await prisma.$executeRawUnsafe("CREATE INDEX IF NOT EXISTS Match_groupName_idx ON Match(groupName);");
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS Bet (
+      id TEXT NOT NULL PRIMARY KEY,
+      participantId TEXT NOT NULL,
+      matchId TEXT NOT NULL,
+      homeScoreGuess INTEGER NOT NULL,
+      awayScoreGuess INTEGER NOT NULL,
+      submittedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT Bet_participantId_fkey FOREIGN KEY (participantId) REFERENCES Participant(id) ON DELETE CASCADE ON UPDATE CASCADE,
+      CONSTRAINT Bet_matchId_fkey FOREIGN KEY (matchId) REFERENCES Match(id) ON DELETE CASCADE ON UPDATE CASCADE
+    );
+  `);
+  await prisma.$executeRawUnsafe("CREATE UNIQUE INDEX IF NOT EXISTS Bet_participantId_matchId_key ON Bet(participantId, matchId);");
+  await prisma.$executeRawUnsafe("CREATE INDEX IF NOT EXISTS Bet_matchId_idx ON Bet(matchId);");
+  await prisma.$executeRawUnsafe("CREATE INDEX IF NOT EXISTS Bet_participantId_idx ON Bet(participantId);");
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS AdminUser (
+      id TEXT NOT NULL PRIMARY KEY,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL UNIQUE,
+      passwordHash TEXT NOT NULL,
+      role TEXT NOT NULL DEFAULT 'admin',
+      createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+}
+
+main()
+  .then(async () => {
+    await prisma.$disconnect();
+    console.log("SQLite inicializado com sucesso.");
+  })
+  .catch(async (error) => {
+    console.error(error);
+    await prisma.$disconnect();
+    process.exit(1);
+  });

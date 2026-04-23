@@ -1,0 +1,42 @@
+import { describe, expect, it, vi } from "vitest";
+import { submitBets } from "@/services/bets";
+import { zonedDateTimeToUtc } from "@/lib/timezone";
+
+const openMatch = {
+  id: "m1",
+  groupName: "Grupo A",
+  matchDate: "2026-06-11",
+  matchTime: "16:00",
+  kickoffAt: zonedDateTimeToUtc("2026-06-11", "16:00"),
+  homeTeam: "México",
+  awayTeam: "África do Sul",
+  isActive: true,
+  createdAt: new Date()
+};
+
+describe("submitBets", () => {
+  it("bloqueia duplicidade de bet por participantId + matchId", async () => {
+    const client = {
+      match: {
+        findMany: vi.fn().mockResolvedValue([openMatch])
+      },
+      bet: {
+        findUnique: vi.fn().mockResolvedValue({ id: "bet-existente" }),
+        create: vi.fn()
+      },
+      $transaction: vi.fn()
+    };
+
+    await expect(
+      submitBets(
+        "p1",
+        [{ matchId: "m1", homeScoreGuess: 2, awayScoreGuess: 1 }],
+        new Date("2026-06-11T18:00:00.000Z"),
+        client as any
+      )
+    ).rejects.toThrow("Sua aposta para este jogo já foi registrada.");
+
+    expect(client.bet.create).not.toHaveBeenCalled();
+    expect(client.$transaction).not.toHaveBeenCalled();
+  });
+});
