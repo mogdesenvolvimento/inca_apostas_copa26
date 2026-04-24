@@ -142,6 +142,9 @@ export function ApostasClient() {
             <p className="text-sm font-semibold text-teal">{publicCopy.bets.greetingPrefix}, {participantName}</p>
             <h1 className="font-heading mt-3 text-3xl font-bold text-ink">{publicCopy.bets.title}</h1>
             <p className="mt-3 max-w-2xl text-sm text-ink/70">{publicCopy.bets.subtitle}</p>
+            <p className="mt-2 max-w-2xl text-[0.92rem] font-medium leading-relaxed text-[#b35b5b]">
+              Apostas nos placares ficam liberadas até 30 minutos antes do início de cada jogo.
+            </p>
           </div>
           <IncaLogo variant="hero" className="hidden sm:flex" priority />
         </div>
