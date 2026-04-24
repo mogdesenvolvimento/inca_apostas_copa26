@@ -1,17 +1,17 @@
 export const publicCopy = {
   home: {
-    badge: "Ação especial Copa 2026",
+    badge: "Palpites dos Jogos",
     title: "Dê seus palpites e entre no clima da Copa no Inca",
     subtitle: "Escolhe os placares dos jogos do dia e participa com a galera.",
     supporting: "Jogo grande, mesa cheia e torcida na pilha — do jeito que o Inca gosta.",
-    legal: "Participação promocional, sem pagamentos e sem vínculo com apostas financeiras reais.",
+    legal: "* Participação promocional, sem pagamentos ou vínculo com apostas financeiras reais.",
     cta: "Quero participar"
   },
   register: {
     title: "Entra na jogada",
     subtitle: "Coloca teus dados rapidinho pra liberar os jogos.",
-    hint: "Sem fila, sem enrolação.",
-    submit: "Quero participar",
+    hint: "Cadastre-se",
+    submit: "Acessar",
     submitLoading: "Liberando teus jogos..."
   },
   bets: {

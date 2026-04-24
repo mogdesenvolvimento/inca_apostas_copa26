@@ -8,7 +8,7 @@ export default function SuccessPage() {
     <PublicShell>
       <PublicHeader eyebrow="Agora é acompanhar os jogos e curtir a torcida." />
       <section className="rounded-[2rem] border border-white/70 bg-white/85 p-8 text-center shadow-card">
-        <p className="font-display-accent text-sm text-teal">{publicCopy.success.badge}</p>
+        <p className="text-sm font-semibold uppercase tracking-[0.08em] text-teal">{publicCopy.success.badge}</p>
         <h1 className="font-heading mt-4 text-5xl font-bold text-ink">{publicCopy.success.title}</h1>
         <p className="mt-4 text-ink/70">{publicCopy.success.subtitle}</p>
         <Link href="/" className="mt-8 inline-flex rounded-2xl bg-gradient-to-r from-wine via-clay to-amber px-6 py-4 font-bold text-white">

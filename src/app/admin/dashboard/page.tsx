@@ -37,7 +37,7 @@ export default async function AdminDashboardPage() {
           </div>
 
           <div className="rounded-[1.75rem] bg-white/85 p-5 shadow-card">
-            <h2 className="font-display-accent text-2xl text-ink">{adminCopy.dashboard.todayMatchesTitle}</h2>
+            <h2 className="font-heading text-2xl font-bold text-ink">{adminCopy.dashboard.todayMatchesTitle}</h2>
             <div className="mt-4 grid gap-3">
               {todayMatches.length ? (
                 todayMatches.map((match) => (
