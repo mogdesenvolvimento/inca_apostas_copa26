@@ -34,7 +34,7 @@ describe("submitBets", () => {
         new Date("2026-06-11T18:00:00.000Z"),
         client as any
       )
-    ).rejects.toThrow("Seu palpite para este jogo já foi registrado.");
+    ).rejects.toThrow("Seu palpite pra esse jogo já foi registrado.");
 
     expect(client.bet.create).not.toHaveBeenCalled();
     expect(client.$transaction).not.toHaveBeenCalled();

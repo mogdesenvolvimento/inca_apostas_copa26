@@ -2,8 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { getCurrentAdmin } from "@/lib/auth";
+import { formatCpf } from "@/lib/cpf";
 import { adminCopy } from "@/lib/copy";
-import { formatPhoneBR } from "@/lib/phone";
+import { formatPhoneBR, normalizePhone } from "@/lib/phone";
 import { prisma } from "@/lib/prisma";
 import { formatDateBR, formatDateTimeBR } from "@/lib/timezone";
 
@@ -24,6 +25,15 @@ export default async function AdminBetsPage({ searchParams }: Props) {
   const group = searchParams?.group || undefined;
   const matchId = searchParams?.matchId || undefined;
   const search = searchParams?.search?.trim() || "";
+  const searchCpf = search.replace(/\D/g, "");
+  const searchPhone = normalizePhone(search);
+  const searchCode = search.toUpperCase();
+  const searchClauses = [
+    { name: { contains: search } },
+    ...(searchPhone ? [{ phone: { contains: searchPhone } }] : []),
+    ...(searchCpf ? [{ cpf: { contains: searchCpf } }] : []),
+    ...(searchCode ? [{ registrationCode: { contains: searchCode } }] : [])
+  ];
 
   const [matches, groups, bets] = await Promise.all([
     prisma.match.findMany({ orderBy: [{ matchDate: "asc" }, { kickoffAt: "asc" }] }),
@@ -34,7 +44,7 @@ export default async function AdminBetsPage({ searchParams }: Props) {
         match: { matchDate: date, groupName: group },
         participant: search
           ? {
-              OR: [{ name: { contains: search } }, { phone: { contains: search.replace(/\D/g, "") } }]
+              OR: searchClauses
             }
           : undefined
       },
@@ -53,7 +63,7 @@ export default async function AdminBetsPage({ searchParams }: Props) {
   return (
     <div className="min-h-screen">
       <AdminNav adminName={admin.name} />
-      <main className="mx-auto max-w-6xl px-4 py-6">
+      <main className="mx-auto max-w-7xl px-4 py-6">
         <section className="space-y-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -95,8 +105,10 @@ export default async function AdminBetsPage({ searchParams }: Props) {
           </form>
 
           <div className="overflow-hidden rounded-[1.75rem] bg-white/85 shadow-card">
-            <div className="hidden grid-cols-[1.3fr_1fr_1.4fr_0.7fr_1fr] gap-3 border-b border-ink/10 p-4 text-sm font-bold text-leaf md:grid">
+            <div className="hidden grid-cols-[1fr_1.2fr_1fr_1fr_1.4fr_0.8fr_1fr] gap-3 border-b border-ink/10 p-4 text-sm font-bold text-leaf lg:grid">
+              <span>{adminCopy.bets.table.code}</span>
               <span>{adminCopy.bets.table.name}</span>
+              <span>{adminCopy.bets.table.cpf}</span>
               <span>{adminCopy.bets.table.phone}</span>
               <span>{adminCopy.bets.table.matchup}</span>
               <span>{adminCopy.bets.table.score}</span>
@@ -104,8 +116,10 @@ export default async function AdminBetsPage({ searchParams }: Props) {
             </div>
             {bets.length ? (
               bets.map((bet) => (
-                <div key={bet.id} className="grid gap-2 border-b border-ink/10 p-4 text-sm last:border-b-0 md:grid-cols-[1.3fr_1fr_1.4fr_0.7fr_1fr] md:gap-3">
+                <div key={bet.id} className="grid gap-2 border-b border-ink/10 p-4 text-sm last:border-b-0 lg:grid-cols-[1fr_1.2fr_1fr_1fr_1.4fr_0.8fr_1fr] lg:gap-3">
+                  <span className="font-bold text-leaf">{bet.participant.registrationCode}</span>
                   <strong>{bet.participant.name}</strong>
+                  <span>{formatCpf(bet.participant.cpf)}</span>
                   <span>{formatPhoneBR(bet.participant.phone)}</span>
                   <Link className="font-bold text-leaf underline" href={`/admin/jogos/${encodeURIComponent(bet.match.id)}`}>
                     {bet.match.homeTeam} x {bet.match.awayTeam}

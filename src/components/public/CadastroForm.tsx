@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { publicCopy } from "@/lib/copy";
@@ -12,12 +12,33 @@ function maskPhone(value: string) {
   return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
 }
 
+function maskCpf(value: string) {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+  if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+}
+
+type ConfirmState = {
+  participantId: string;
+  name: string;
+  cpfMasked: string;
+  phone: string;
+  registrationCode: string;
+  message: string | null;
+};
+
 export function CadastroForm() {
   const router = useRouter();
   const [name, setName] = useState("");
+  const [cpf, setCpf] = useState("");
   const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
+
+  const isModalOpen = useMemo(() => Boolean(confirmState), [confirmState]);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -27,7 +48,7 @@ export function CadastroForm() {
     const response = await fetch("/api/participants", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, phone })
+      body: JSON.stringify({ name, cpf, phone })
     });
     const data = await response.json();
     setLoading(false);
@@ -37,42 +58,103 @@ export function CadastroForm() {
       return;
     }
 
-    window.localStorage.setItem("participantId", data.participant.id);
-    window.localStorage.setItem("participantName", data.participant.name);
-    if (data.message) {
-      window.sessionStorage.setItem("participantMessage", data.message);
+    setConfirmState({
+      participantId: data.participantId,
+      name: data.name,
+      cpfMasked: data.cpfMasked,
+      phone: data.phone,
+      registrationCode: data.registrationCode,
+      message: data.message ?? null
+    });
+  }
+
+  function handleContinue() {
+    if (!confirmState) {
+      return;
     }
 
+    window.localStorage.setItem("participantId", confirmState.participantId);
+    window.localStorage.setItem("participantName", confirmState.name);
+
+    if (confirmState.message) {
+      window.sessionStorage.setItem("participantMessage", confirmState.message);
+    } else {
+      window.sessionStorage.removeItem("participantMessage");
+    }
+
+    setConfirmState(null);
     router.push("/apostas");
   }
 
   return (
-    <form onSubmit={onSubmit} className="mt-6 space-y-4">
-      <label className="block">
-        <span className="mb-2 block font-bold text-ink">Seu nome</span>
-        <input
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          required
-          className="w-full rounded-2xl border border-teal/20 bg-field px-4 py-4 text-lg outline-none ring-teal/30 transition focus:ring-4"
-          placeholder="Como você quer aparecer na torcida"
-        />
-      </label>
-      <label className="block">
-        <span className="mb-2 block font-bold text-ink">Telefone celular</span>
-        <input
-          value={phone}
-          onChange={(event) => setPhone(maskPhone(event.target.value))}
-          required
-          inputMode="tel"
-          className="w-full rounded-2xl border border-teal/20 bg-field px-4 py-4 text-lg outline-none ring-teal/30 transition focus:ring-4"
-          placeholder="(11) 99999-9999"
-        />
-      </label>
-      {error ? <p className="rounded-2xl bg-wine/10 p-3 text-sm font-bold text-wine">{error}</p> : null}
-      <PrimaryButton type="submit" disabled={loading} className="w-full">
-        {loading ? publicCopy.register.submitLoading : publicCopy.register.submit}
-      </PrimaryButton>
-    </form>
+    <>
+      <form onSubmit={onSubmit} className="mt-6 space-y-4">
+        <label className="block">
+          <span className="mb-2 block font-bold text-ink">Nome completo</span>
+          <input
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            required
+            className="w-full rounded-2xl border border-teal/20 bg-field px-4 py-4 text-lg outline-none ring-teal/30 transition focus:ring-4"
+            placeholder="Nome completo"
+          />
+        </label>
+        <label className="block">
+          <span className="mb-2 block font-bold text-ink">CPF</span>
+          <input
+            value={cpf}
+            onChange={(event) => setCpf(maskCpf(event.target.value))}
+            required
+            inputMode="numeric"
+            className="w-full rounded-2xl border border-teal/20 bg-field px-4 py-4 text-lg outline-none ring-teal/30 transition focus:ring-4"
+            placeholder="000.000.000-00"
+          />
+        </label>
+        <label className="block">
+          <span className="mb-2 block font-bold text-ink">Telefone celular</span>
+          <input
+            value={phone}
+            onChange={(event) => setPhone(maskPhone(event.target.value))}
+            required
+            inputMode="tel"
+            className="w-full rounded-2xl border border-teal/20 bg-field px-4 py-4 text-lg outline-none ring-teal/30 transition focus:ring-4"
+            placeholder="(11) 99999-9999"
+          />
+        </label>
+        {error ? <p className="rounded-2xl bg-wine/10 p-3 text-sm font-bold text-wine">{error}</p> : null}
+        <PrimaryButton type="submit" disabled={loading} className="w-full">
+          {loading ? publicCopy.register.submitLoading : publicCopy.register.submit}
+        </PrimaryButton>
+      </form>
+
+      {isModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/55 p-4">
+          <div className="w-full max-w-md rounded-[1.75rem] bg-white p-6 shadow-card">
+            <p className="text-sm font-semibold uppercase tracking-[0.08em] text-teal">Cadastro confirmado</p>
+            <p className="mt-4 text-sm leading-relaxed text-ink/75">
+              Guarde essas informações. Se seu palpite acertar, você deverá apresentar este código e o print desta tela
+              para receber o prêmio.
+            </p>
+            <div className="mt-5 space-y-3 rounded-2xl bg-field p-4 text-sm text-ink">
+              <p>
+                <strong>Nome:</strong> {confirmState?.name}
+              </p>
+              <p>
+                <strong>CPF:</strong> {confirmState?.cpfMasked}
+              </p>
+              <p>
+                <strong>Telefone:</strong> {confirmState?.phone}
+              </p>
+              <p>
+                <strong>Código:</strong> {confirmState?.registrationCode}
+              </p>
+            </div>
+            <PrimaryButton type="button" onClick={handleContinue} className="mt-5 w-full">
+              Salvar e continuar
+            </PrimaryButton>
+          </div>
+        </div>
+      ) : null}
+    </>
   );
 }

@@ -8,11 +8,15 @@ datasource db {
 }
 
 model Participant {
-  id        String   @id @default(cuid())
-  name      String
-  phone     String   @unique
-  createdAt DateTime @default(now())
-  bets      Bet[]
+  id               String   @id @default(cuid())
+  name             String
+  cpf              String   @unique
+  phone            String
+  registrationCode String   @unique
+  createdAt        DateTime @default(now())
+  bets             Bet[]
+
+  @@index([phone])
 }
 
 model Match {

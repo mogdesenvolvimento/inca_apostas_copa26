@@ -11,6 +11,7 @@ export default function CadastroPage() {
         <p className="text-sm font-semibold text-wine">{publicCopy.register.hint}</p>
         <h1 className="font-heading mt-3 text-3xl font-bold text-ink sm:text-5xl">{publicCopy.register.title}</h1>
         <p className="mt-3 max-w-xl text-ink/70">{publicCopy.register.subtitle}</p>
+        <p className="mt-2 max-w-xl text-sm text-ink/60">{publicCopy.register.supporting}</p>
         <CadastroForm />
       </section>
     </PublicShell>

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { normalizeCpf } from "@/lib/cpf";
 import { getCurrentAdmin } from "@/lib/auth";
 import { jsonError } from "@/lib/http";
+import { normalizePhone } from "@/lib/phone";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(request: Request) {
@@ -15,6 +17,15 @@ export async function GET(request: Request) {
   const matchId = searchParams.get("matchId") ?? undefined;
   const search = searchParams.get("search")?.trim() ?? "";
   const exportCsv = searchParams.get("export") === "csv";
+  const searchCpf = normalizeCpf(search);
+  const searchPhone = normalizePhone(search);
+  const searchCode = search.toUpperCase();
+  const searchClauses = [
+    { name: { contains: search } },
+    ...(searchPhone ? [{ phone: { contains: searchPhone } }] : []),
+    ...(searchCpf ? [{ cpf: { contains: searchCpf } }] : []),
+    ...(searchCode ? [{ registrationCode: { contains: searchCode } }] : [])
+  ];
 
   const bets = await prisma.bet.findMany({
     where: {
@@ -25,10 +36,7 @@ export async function GET(request: Request) {
       },
       participant: search
         ? {
-            OR: [
-              { name: { contains: search } },
-              { phone: { contains: search.replace(/\D/g, "") } }
-            ]
+            OR: searchClauses
           }
         : undefined
     },
@@ -40,10 +48,12 @@ export async function GET(request: Request) {
   });
 
   if (exportCsv) {
-    const header = "nome,telefone,grupo,confronto,placar,data_envio";
+    const header = "codigo,nome,cpf,telefone,grupo,confronto,placar,data_envio";
     const rows = bets.map((bet) =>
       [
+        bet.participant.registrationCode,
         bet.participant.name,
+        bet.participant.cpf,
         bet.participant.phone,
         bet.match.groupName,
         `${bet.match.homeTeam} x ${bet.match.awayTeam}`,

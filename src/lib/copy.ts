@@ -11,6 +11,7 @@ export const publicCopy = {
     title: "Entra na jogada",
     subtitle: "Coloca teus dados rapidinho pra liberar os jogos.",
     hint: "Cadastre-se",
+    supporting: "Teu CPF ajuda a garantir uma participação por pessoa.",
     submit: "Acessar",
     submitLoading: "Liberando teus jogos..."
   },
@@ -37,7 +38,7 @@ export const publicCopy = {
     cta: "Voltar ao início"
   },
   participantFound:
-    "A gente encontrou teu cadastro por aqui. Dá pra ver o que você já mandou e seguir só nos jogos que ainda estão abertos."
+    "Encontramos teu cadastro anterior. Dá pra ver o que você já mandou e seguir só nos jogos que ainda estão abertos."
 };
 
 export const stateMessages = {
@@ -68,16 +69,18 @@ export const adminCopy = {
   },
   bets: {
     title: "Apostas",
-    subtitle: "Consulta rápida por jogo, participante ou telefone.",
+    subtitle: "Consulta rápida por jogo, participante, CPF, código ou telefone.",
     export: "Exportar CSV",
     filters: {
       allGroups: "Todos os grupos",
       allMatches: "Todos os jogos",
-      searchPlaceholder: "Nome ou telefone",
+      searchPlaceholder: "Nome, CPF, código ou telefone",
       submit: "Filtrar"
     },
     table: {
+      code: "Código",
       name: "Nome",
+      cpf: "CPF",
       phone: "Telefone",
       matchup: "Confronto",
       score: "Placar",

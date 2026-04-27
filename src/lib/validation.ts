@@ -1,11 +1,21 @@
+import { isValidCpf, normalizeCpf } from "@/lib/cpf";
 import { isValidBrazilPhone, normalizePhone } from "@/lib/phone";
 
-export function validateParticipantInput(name: string, phone: string) {
+export function validateParticipantInput(name: string, cpf: string, phone: string) {
   const trimmedName = name.trim();
+  const normalizedCpf = normalizeCpf(cpf);
   const normalizedPhone = normalizePhone(phone);
 
   if (!trimmedName) {
     throw new Error("Nome completo é obrigatório.");
+  }
+
+  if (!cpf.trim()) {
+    throw new Error("CPF é obrigatório.");
+  }
+
+  if (!isValidCpf(normalizedCpf)) {
+    throw new Error("Informe um CPF válido.");
   }
 
   if (!phone.trim()) {
@@ -18,6 +28,7 @@ export function validateParticipantInput(name: string, phone: string) {
 
   return {
     name: trimmedName,
+    cpf: normalizedCpf,
     phone: normalizedPhone
   };
 }
