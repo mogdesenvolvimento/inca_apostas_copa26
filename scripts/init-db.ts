@@ -21,15 +21,34 @@ function ensureSqliteDirectory() {
 }
 
 async function main() {
-  await prisma.$executeRawUnsafe("PRAGMA foreign_keys=ON;");
+  await prisma.$executeRawUnsafe("PRAGMA foreign_keys=OFF;");
+
+  const participantColumns = (await prisma.$queryRawUnsafe<Array<{ name: string }>>(`PRAGMA table_info('Participant');`)).map(
+    (column) => column.name
+  );
+
+  const needsParticipantRebuild =
+    participantColumns.length > 0 &&
+    (!participantColumns.includes("cpf") || !participantColumns.includes("registrationCode"));
+
+  if (needsParticipantRebuild) {
+    await prisma.$executeRawUnsafe(`DROP TABLE IF EXISTS Bet;`);
+    await prisma.$executeRawUnsafe(`DROP TABLE IF EXISTS Participant;`);
+    console.log("Schema antigo de Participant detectado. Participant e Bet foram recriados.");
+  }
+
   await prisma.$executeRawUnsafe(`
     CREATE TABLE IF NOT EXISTS Participant (
       id TEXT NOT NULL PRIMARY KEY,
       name TEXT NOT NULL,
-      phone TEXT NOT NULL UNIQUE,
+      cpf TEXT NOT NULL UNIQUE,
+      phone TEXT NOT NULL,
+      registrationCode TEXT NOT NULL UNIQUE,
       createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
   `);
+  await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS Participant_phone_idx ON Participant(phone);`);
+
   await prisma.$executeRawUnsafe(`
     CREATE TABLE IF NOT EXISTS Match (
       id TEXT NOT NULL PRIMARY KEY,
@@ -43,8 +62,9 @@ async function main() {
       createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
   `);
-  await prisma.$executeRawUnsafe("CREATE INDEX IF NOT EXISTS Match_matchDate_idx ON Match(matchDate);");
-  await prisma.$executeRawUnsafe("CREATE INDEX IF NOT EXISTS Match_groupName_idx ON Match(groupName);");
+  await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS Match_matchDate_idx ON Match(matchDate);`);
+  await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS Match_groupName_idx ON Match(groupName);`);
+
   await prisma.$executeRawUnsafe(`
     CREATE TABLE IF NOT EXISTS Bet (
       id TEXT NOT NULL PRIMARY KEY,
@@ -57,9 +77,10 @@ async function main() {
       CONSTRAINT Bet_matchId_fkey FOREIGN KEY (matchId) REFERENCES Match(id) ON DELETE CASCADE ON UPDATE CASCADE
     );
   `);
-  await prisma.$executeRawUnsafe("CREATE UNIQUE INDEX IF NOT EXISTS Bet_participantId_matchId_key ON Bet(participantId, matchId);");
-  await prisma.$executeRawUnsafe("CREATE INDEX IF NOT EXISTS Bet_matchId_idx ON Bet(matchId);");
-  await prisma.$executeRawUnsafe("CREATE INDEX IF NOT EXISTS Bet_participantId_idx ON Bet(participantId);");
+  await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS Bet_participantId_matchId_key ON Bet(participantId, matchId);`);
+  await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS Bet_matchId_idx ON Bet(matchId);`);
+  await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS Bet_participantId_idx ON Bet(participantId);`);
+
   await prisma.$executeRawUnsafe(`
     CREATE TABLE IF NOT EXISTS AdminUser (
       id TEXT NOT NULL PRIMARY KEY,
@@ -70,6 +91,8 @@ async function main() {
       createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
   `);
+
+  await prisma.$executeRawUnsafe("PRAGMA foreign_keys=ON;");
 }
 
 main()
