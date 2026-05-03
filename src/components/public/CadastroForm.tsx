@@ -140,20 +140,20 @@ export function CadastroForm() {
       </form>
 
       {isModalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/55 p-4">
-          <div className="w-full max-w-md rounded-[1.9rem] bg-white p-6 shadow-card">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-ink/55 p-3 sm:p-4">
+          <div className="w-full max-w-md rounded-[1.9rem] bg-white p-5 shadow-card sm:p-6">
             <p className="text-sm font-semibold uppercase tracking-[0.12em] text-teal">Cadastro confirmado</p>
             <p className="mt-4 text-sm font-medium leading-relaxed text-ink/80">
               Salve o código ou o print desta tela para apresentar no caso de acertos nas apostas.
             </p>
             <p className="mt-2 text-xs leading-relaxed text-ink/55">Esse código identifica sua participação no sistema.</p>
 
-            <div className="mt-5 rounded-[1.6rem] border border-teal/20 bg-gradient-to-br from-field via-white to-teal/10 p-5 shadow-sm">
-              <p className="text-xs font-medium uppercase tracking-[0.14em] text-teal/80">Seu código</p>
-              <p className="mt-2 break-all font-mono text-[1.85rem] font-bold tracking-[0.16em] text-navy sm:text-[2.1rem]">
+            <div className="mt-5 rounded-[1.6rem] border border-teal/20 bg-gradient-to-br from-field via-white to-teal/10 px-4 py-5 shadow-sm sm:px-5">
+              <p className="text-center text-xs font-medium uppercase tracking-[0.14em] text-teal/80">Seu código</p>
+              <p className="mt-2 max-w-full whitespace-nowrap break-normal text-center font-mono text-[clamp(1.75rem,8vw,3rem)] font-bold tracking-[0.08em] text-navy [overflow-wrap:normal] [word-break:keep-all]">
                 {confirmState?.registrationCode}
               </p>
-              <p className="mt-2 text-xs text-ink/60">Guarde este código</p>
+              <p className="mt-2 text-center text-xs text-ink/60">Guarde este código</p>
               <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
                 <button
                   type="button"
