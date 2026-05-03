@@ -29,10 +29,20 @@ function formatDate(date: string) {
   return `${day}/${month}/${year}`;
 }
 
-function statusLabel(status: MatchStatus) {
-  if (status === "available") return publicCopy.bets.statusAvailable;
-  if (status === "already_bet") return publicCopy.bets.statusAlreadyBet;
-  return publicCopy.bets.statusClosed;
+function getStatusPresentation(status: MatchStatus) {
+  if (status === "available") {
+    return {
+      label: "Palpite aberto",
+      disabled: false,
+      className: "bg-teal/14 text-teal border border-teal/20"
+    };
+  }
+
+  return {
+    label: "Palpite fechado",
+    disabled: true,
+    className: "border border-wine/18 bg-wine/12 text-wine"
+  };
 }
 
 export function ApostasClient() {
@@ -139,7 +149,9 @@ export function ApostasClient() {
       <div className="rounded-[2rem] border border-white/70 bg-white/86 p-6 shadow-card">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-sm font-semibold text-teal">{publicCopy.bets.greetingPrefix}, {participantName}</p>
+            <p className="text-sm font-semibold text-teal">
+              {publicCopy.bets.greetingPrefix}, {participantName}
+            </p>
             <h1 className="font-heading mt-3 text-3xl font-bold text-ink">{publicCopy.bets.title}</h1>
             <p className="mt-3 max-w-2xl text-sm text-ink/70">{publicCopy.bets.subtitle}</p>
             <p className="mt-2 max-w-2xl text-[0.92rem] font-medium leading-relaxed text-[#b35b5b]">
@@ -158,7 +170,9 @@ export function ApostasClient() {
 
       <form onSubmit={onSubmit} className="space-y-4">
         {matches.map((match) => {
-          const disabled = match.status !== "available";
+          const statusPresentation = getStatusPresentation(match.status);
+          const disabled = statusPresentation.disabled;
+
           return (
             <article key={match.id} className="overflow-hidden rounded-[1.75rem] border border-white/70 bg-white/90 p-5 shadow-card">
               <div className="mb-4 h-1.5 w-24 rounded-full bg-gradient-to-r from-wine via-amber to-teal" />
@@ -202,8 +216,8 @@ export function ApostasClient() {
                   aria-label={`Placar ${match.awayTeam}`}
                 />
               </div>
-              <p className="mt-4 rounded-2xl bg-navy/10 px-4 py-3 text-center text-sm font-bold text-ink/70">
-                {match.status === "already_bet" ? stateMessages.alreadyRegistered : statusLabel(match.status)}
+              <p className={`mt-4 rounded-2xl px-4 py-3 text-center text-sm font-bold ${statusPresentation.className}`}>
+                {statusPresentation.label}
               </p>
             </article>
           );
