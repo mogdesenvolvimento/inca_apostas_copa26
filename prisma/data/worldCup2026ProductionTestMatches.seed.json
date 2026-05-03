@@ -1,0 +1,8 @@
+[
+  { "matchNumber": 1001, "stage": "test", "group": "T", "matchDate": "2026-05-03", "matchTime": "18:00", "kickoffAt": "2026-05-03T18:00:00-03:00", "homeTeam": "Brasil", "awayTeam": "Chile", "stadium": "Arena Inca Teste", "city": "São Paulo", "status": "scheduled" },
+  { "matchNumber": 1002, "stage": "test", "group": "T", "matchDate": "2026-05-03", "matchTime": "21:00", "kickoffAt": "2026-05-03T21:00:00-03:00", "homeTeam": "Argentina", "awayTeam": "Uruguai", "stadium": "Arena Inca Teste", "city": "São Paulo", "status": "scheduled" },
+  { "matchNumber": 1003, "stage": "test", "group": "T", "matchDate": "2026-05-04", "matchTime": "18:30", "kickoffAt": "2026-05-04T18:30:00-03:00", "homeTeam": "França", "awayTeam": "Portugal", "stadium": "Arena Inca Teste", "city": "Campinas", "status": "scheduled" },
+  { "matchNumber": 1004, "stage": "test", "group": "T", "matchDate": "2026-05-04", "matchTime": "21:30", "kickoffAt": "2026-05-04T21:30:00-03:00", "homeTeam": "Alemanha", "awayTeam": "Espanha", "stadium": "Arena Inca Teste", "city": "Campinas", "status": "scheduled" },
+  { "matchNumber": 1005, "stage": "test", "group": "T", "matchDate": "2026-05-05", "matchTime": "18:15", "kickoffAt": "2026-05-05T18:15:00-03:00", "homeTeam": "Colômbia", "awayTeam": "México", "stadium": "Arena Inca Teste", "city": "Curitiba", "status": "scheduled" },
+  { "matchNumber": 1006, "stage": "test", "group": "T", "matchDate": "2026-05-05", "matchTime": "21:15", "kickoffAt": "2026-05-05T21:15:00-03:00", "homeTeam": "Inglaterra", "awayTeam": "Holanda", "stadium": "Arena Inca Teste", "city": "Curitiba", "status": "scheduled" }
+]

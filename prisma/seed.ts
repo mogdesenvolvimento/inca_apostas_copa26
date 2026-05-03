@@ -19,8 +19,8 @@ type SeedMatch = {
   status: string;
 };
 
-function loadMatches(): SeedMatch[] {
-  const filePath = path.join(process.cwd(), "prisma", "data", "worldCup2026GroupStage.seed.json");
+function loadMatches(fileName: string): SeedMatch[] {
+  const filePath = path.join(process.cwd(), "prisma", "data", fileName);
   return JSON.parse(fs.readFileSync(filePath, "utf8")) as SeedMatch[];
 }
 
@@ -28,7 +28,10 @@ async function main() {
   const adminEmail = process.env.ADMIN_EMAIL ?? "admin@inca.local";
   const adminPassword = process.env.ADMIN_PASSWORD ?? "admin123";
   const adminName = process.env.ADMIN_NAME ?? "Administrador";
-  const matches = loadMatches();
+  const matches = [
+    ...loadMatches("worldCup2026ProductionTestMatches.seed.json"),
+    ...loadMatches("worldCup2026GroupStage.seed.json")
+  ];
 
   const existingAdmin = await prisma.adminUser.findUnique({
     where: { email: adminEmail },
