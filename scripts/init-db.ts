@@ -29,7 +29,9 @@ async function main() {
 
   const needsParticipantRebuild =
     participantColumns.length > 0 &&
-    (!participantColumns.includes("cpf") || !participantColumns.includes("registrationCode"));
+    (!participantColumns.includes("cpf") ||
+      !participantColumns.includes("registrationCode") ||
+      !participantColumns.includes("passwordHash"));
 
   if (needsParticipantRebuild) {
     await prisma.$executeRawUnsafe(`DROP TABLE IF EXISTS Bet;`);
@@ -43,6 +45,7 @@ async function main() {
       name TEXT NOT NULL,
       cpf TEXT NOT NULL UNIQUE,
       phone TEXT NOT NULL,
+      passwordHash TEXT NOT NULL,
       registrationCode TEXT NOT NULL UNIQUE,
       createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
     );

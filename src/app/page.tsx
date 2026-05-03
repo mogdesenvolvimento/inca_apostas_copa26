@@ -21,12 +21,20 @@ export default function HomePage() {
               {publicCopy.home.subtitle}
             </p>
             <p className="max-w-[540px] text-base font-normal leading-[1.6] text-[#6B7280]">{publicCopy.home.supporting}</p>
-            <Link
-              href="/cadastro"
-              className="mt-3 inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-wine via-clay to-amber px-6 py-4 text-lg font-bold text-white shadow-card transition hover:brightness-110 sm:w-auto"
-            >
-              {publicCopy.home.cta}
-            </Link>
+            <div className="mt-3 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+              <Link
+                href="/cadastro"
+                className="inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-wine via-clay to-amber px-6 py-4 text-lg font-bold text-white shadow-card transition hover:brightness-110 sm:w-auto"
+              >
+                {publicCopy.home.cta}
+              </Link>
+              <Link
+                href="/login"
+                className="inline-flex w-full items-center justify-center rounded-2xl border border-teal/18 bg-white/82 px-6 py-4 text-lg font-bold text-teal shadow-card transition hover:bg-teal/5 sm:w-auto"
+              >
+                {publicCopy.home.secondaryCta}
+              </Link>
+            </div>
             <p className="max-w-[520px] text-[13px] leading-[1.4] text-[#6B7280] opacity-80">{publicCopy.home.legal}</p>
           </div>
 

@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { submitBets } from "@/services/bets";
+import { getCurrentParticipant } from "@/lib/auth";
 import { jsonError, readJson } from "@/lib/http";
+import { submitBets } from "@/services/bets";
 
 type Body = {
-  participantId?: string;
   bets?: Array<{
     matchId: string;
     homeScoreGuess: unknown;
@@ -13,11 +13,16 @@ type Body = {
 
 export async function POST(request: Request) {
   try {
+    const participant = await getCurrentParticipant();
+    if (!participant) {
+      return jsonError("Faz teu acesso para continuar.", 401);
+    }
+
     const body = await readJson<Body>(request);
-    const created = await submitBets(body.participantId ?? "", body.bets ?? []);
+    const created = await submitBets(participant.id, body.bets ?? []);
 
     return NextResponse.json({ bets: created });
   } catch (error) {
-    return jsonError(error instanceof Error ? error.message : "Não foi possível salvar sua aposta.");
+    return jsonError(error instanceof Error ? error.message : "Não foi possível salvar tua aposta.");
   }
 }

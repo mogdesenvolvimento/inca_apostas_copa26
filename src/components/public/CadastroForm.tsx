@@ -21,7 +21,6 @@ function maskCpf(value: string) {
 }
 
 type ConfirmState = {
-  participantId: string;
   name: string;
   cpfMasked: string;
   phone: string;
@@ -34,6 +33,8 @@ export function CadastroForm() {
   const [name, setName] = useState("");
   const [cpf, setCpf] = useState("");
   const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -46,10 +47,10 @@ export function CadastroForm() {
     setError("");
     setLoading(true);
 
-    const response = await fetch("/api/participants", {
+    const response = await fetch("/api/participant/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, cpf, phone })
+      body: JSON.stringify({ name, cpf, phone, password, confirmPassword })
     });
     const data = await response.json();
     setLoading(false);
@@ -61,7 +62,6 @@ export function CadastroForm() {
 
     setCopied(false);
     setConfirmState({
-      participantId: data.participantId,
       name: data.name,
       cpfMasked: data.cpfMasked,
       phone: data.phone,
@@ -81,19 +81,6 @@ export function CadastroForm() {
   }
 
   function handleContinue() {
-    if (!confirmState) {
-      return;
-    }
-
-    window.localStorage.setItem("participantId", confirmState.participantId);
-    window.localStorage.setItem("participantName", confirmState.name);
-
-    if (confirmState.message) {
-      window.sessionStorage.setItem("participantMessage", confirmState.message);
-    } else {
-      window.sessionStorage.removeItem("participantMessage");
-    }
-
     setConfirmState(null);
     router.push("/apostas");
   }
@@ -108,7 +95,7 @@ export function CadastroForm() {
             onChange={(event) => setName(event.target.value)}
             required
             className="w-full rounded-2xl border border-teal/20 bg-field px-4 py-4 text-lg outline-none ring-teal/30 transition focus:ring-4"
-            placeholder="Nome completo"
+            placeholder="Como você quer aparecer na torcida"
           />
         </label>
         <label className="block">
@@ -133,6 +120,31 @@ export function CadastroForm() {
             placeholder="(11) 99999-9999"
           />
         </label>
+        <label className="block">
+          <span className="mb-2 block font-bold text-ink">Senha</span>
+          <input
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            required
+            minLength={6}
+            type="password"
+            className="w-full rounded-2xl border border-teal/20 bg-field px-4 py-4 text-lg outline-none ring-teal/30 transition focus:ring-4"
+            placeholder="Crie uma senha"
+          />
+        </label>
+        <label className="block">
+          <span className="mb-2 block font-bold text-ink">Confirmar senha</span>
+          <input
+            value={confirmPassword}
+            onChange={(event) => setConfirmPassword(event.target.value)}
+            required
+            minLength={6}
+            type="password"
+            className="w-full rounded-2xl border border-teal/20 bg-field px-4 py-4 text-lg outline-none ring-teal/30 transition focus:ring-4"
+            placeholder="Repita sua senha"
+          />
+        </label>
+        <p className="text-sm text-ink/60">{publicCopy.register.passwordHint}</p>
         {error ? <p className="rounded-2xl bg-wine/10 p-3 text-sm font-bold text-wine">{error}</p> : null}
         <PrimaryButton type="submit" disabled={loading} className="w-full">
           {loading ? publicCopy.register.submitLoading : publicCopy.register.submit}

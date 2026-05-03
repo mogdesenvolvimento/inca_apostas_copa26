@@ -1,9 +1,16 @@
+import { redirect } from "next/navigation";
 import { PublicShell } from "@/components/PublicShell";
-import { PublicHeader } from "@/components/public/PublicHeader";
-import { CadastroForm } from "@/components/public/CadastroForm";
+import { getCurrentParticipant } from "@/lib/auth";
 import { publicCopy } from "@/lib/copy";
+import { CadastroForm } from "@/components/public/CadastroForm";
+import { PublicHeader } from "@/components/public/PublicHeader";
 
-export default function CadastroPage() {
+export default async function CadastroPage() {
+  const participant = await getCurrentParticipant();
+  if (participant) {
+    redirect("/apostas");
+  }
+
   return (
     <PublicShell>
       <PublicHeader eyebrow="Cadastro rápido pra liberar teus jogos do dia." />

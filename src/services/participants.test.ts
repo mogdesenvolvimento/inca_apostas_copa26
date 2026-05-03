@@ -1,41 +1,36 @@
 import { describe, expect, it, vi } from "vitest";
-import { findOrCreateParticipantByCpf } from "@/services/participants";
+import { authenticateParticipant, createParticipantAccount } from "@/services/participant-auth";
 
 vi.mock("@/lib/registration-code", () => ({
   generateRegistrationCode: vi.fn(() => "INCA-7F3K9D")
 }));
 
-describe("findOrCreateParticipantByCpf", () => {
-  it("retorna participante existente pelo CPF normalizado", async () => {
-    const existing = {
-      id: "p1",
-      name: "Maria",
-      cpf: "52998224725",
-      phone: "5511999998888",
-      registrationCode: "INCA-AAAA11",
-      createdAt: new Date()
-    };
+vi.mock("@/lib/password", () => ({
+  hashPassword: vi.fn(async () => "hashed-password"),
+  verifyPassword: vi.fn(async (password: string, passwordHash: string) => password === "senha123" && passwordHash === "hashed-password")
+}));
+
+describe("createParticipantAccount", () => {
+  it("bloqueia CPF já cadastrado", async () => {
     const client = {
       participant: {
-        findUnique: vi.fn().mockResolvedValueOnce(existing),
+        findUnique: vi.fn().mockResolvedValue({ id: "p1" }),
         create: vi.fn()
       }
     };
 
-    const result = await findOrCreateParticipantByCpf("Maria Nova", "529.982.247-25", "(11) 99999-8888", client as any);
-
-    expect(result.created).toBe(false);
-    expect(result.participant).toBe(existing);
-    expect(client.participant.findUnique).toHaveBeenCalledWith({ where: { cpf: "52998224725" } });
-    expect(client.participant.create).not.toHaveBeenCalled();
+    await expect(
+      createParticipantAccount("Maria", "529.982.247-25", "(11) 99999-8888", "senha123", "senha123", client as any)
+    ).rejects.toThrow("Já existe cadastro com esse CPF. Faz teu acesso para continuar.");
   });
 
-  it("cria participante com código quando o CPF ainda não existe", async () => {
+  it("cria participante com hash de senha e código único", async () => {
     const created = {
       id: "p2",
       name: "João Silva",
       cpf: "52998224725",
       phone: "5521987654321",
+      passwordHash: "hashed-password",
       registrationCode: "INCA-7F3K9D",
       createdAt: new Date()
     };
@@ -46,16 +41,60 @@ describe("findOrCreateParticipantByCpf", () => {
       }
     };
 
-    const result = await findOrCreateParticipantByCpf(" João Silva ", "529.982.247-25", "+55 (21) 98765-4321", client as any);
+    const result = await createParticipantAccount(
+      " João Silva ",
+      "529.982.247-25",
+      "+55 (21) 98765-4321",
+      "senha123",
+      "senha123",
+      client as any
+    );
 
-    expect(result.created).toBe(true);
+    expect(result).toBe(created);
     expect(client.participant.create).toHaveBeenCalledWith({
       data: {
         name: "João Silva",
         cpf: "52998224725",
         phone: "5521987654321",
+        passwordHash: "hashed-password",
         registrationCode: "INCA-7F3K9D"
       }
     });
+  });
+});
+
+describe("authenticateParticipant", () => {
+  it("retorna erro quando o CPF não existe", async () => {
+    const client = {
+      participant: {
+        findUnique: vi.fn().mockResolvedValue(null)
+      }
+    };
+
+    await expect(authenticateParticipant("529.982.247-25", "senha123", client as any)).rejects.toThrow(
+      "Não encontramos cadastro com esse CPF."
+    );
+  });
+
+  it("retorna participante autenticado com CPF e senha válidos", async () => {
+    const participant = {
+      id: "p3",
+      name: "Lucas",
+      cpf: "52998224725",
+      phone: "5511999998888",
+      passwordHash: "hashed-password",
+      registrationCode: "INCA-AAAA11",
+      createdAt: new Date()
+    };
+    const client = {
+      participant: {
+        findUnique: vi.fn().mockResolvedValue(participant)
+      }
+    };
+
+    const result = await authenticateParticipant("529.982.247-25", "senha123", client as any);
+
+    expect(result).toBe(participant);
+    expect(client.participant.findUnique).toHaveBeenCalledWith({ where: { cpf: "52998224725" } });
   });
 });

@@ -33,6 +33,61 @@ export function validateParticipantInput(name: string, cpf: string, phone: strin
   };
 }
 
+export function validateParticipantRegistrationInput(
+  name: string,
+  cpf: string,
+  phone: string,
+  password: string,
+  confirmPassword: string
+) {
+  const participant = validateParticipantInput(name, cpf, phone);
+  const normalizedPassword = password.trim();
+  const normalizedConfirmPassword = confirmPassword.trim();
+
+  if (!normalizedPassword) {
+    throw new Error("Senha é obrigatória.");
+  }
+
+  if (normalizedPassword.length < 6) {
+    throw new Error("A senha precisa ter pelo menos 6 caracteres.");
+  }
+
+  if (!normalizedConfirmPassword) {
+    throw new Error("Confirma tua senha pra continuar.");
+  }
+
+  if (normalizedPassword !== normalizedConfirmPassword) {
+    throw new Error("As senhas não conferem.");
+  }
+
+  return {
+    ...participant,
+    password: normalizedPassword
+  };
+}
+
+export function validateParticipantLoginInput(cpf: string, password: string) {
+  const normalizedCpf = normalizeCpf(cpf);
+  const normalizedPassword = password.trim();
+
+  if (!cpf.trim()) {
+    throw new Error("CPF é obrigatório.");
+  }
+
+  if (!isValidCpf(normalizedCpf)) {
+    throw new Error("Informe um CPF válido.");
+  }
+
+  if (!normalizedPassword) {
+    throw new Error("Senha é obrigatória.");
+  }
+
+  return {
+    cpf: normalizedCpf,
+    password: normalizedPassword
+  };
+}
+
 export function validateScore(score: unknown) {
   const value = Number(score);
 

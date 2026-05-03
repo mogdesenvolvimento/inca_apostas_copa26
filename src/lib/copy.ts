@@ -5,15 +5,27 @@ export const publicCopy = {
     subtitle: "Escolhe os placares dos jogos do dia e participa com a galera.",
     supporting: "Jogo grande, mesa cheia e torcida na pilha — do jeito que o Inca gosta.",
     legal: "* Participação promocional, sem pagamentos ou vínculo com apostas financeiras reais.",
-    cta: "Quero participar"
+    cta: "Criar cadastro",
+    secondaryCta: "Já tenho cadastro"
   },
   register: {
     title: "Entra na jogada",
-    subtitle: "Coloca teus dados rapidinho pra liberar os jogos.",
+    subtitle: "Cria teu cadastro rapidinho pra liberar os jogos.",
     hint: "Cadastre-se",
     supporting: "Teu CPF ajuda a garantir uma participação por pessoa.",
-    submit: "Acessar",
-    submitLoading: "Liberando teus jogos..."
+    passwordHint: "Você vai usar essa senha para voltar aos seus palpites.",
+    submit: "Criar cadastro",
+    submitLoading: "Salvando teu cadastro...",
+    successMessage: "Cadastro confirmado. Agora é só seguir pros teus palpites."
+  },
+  login: {
+    title: "Acessar cadastro",
+    subtitle: "Usa teu CPF e senha para continuar.",
+    hint: "Já tem cadastro",
+    supporting: "Entra de novo pra ver teus palpites e seguir nos jogos abertos.",
+    submit: "Acessar meus palpites",
+    submitLoading: "Entrando...",
+    alternateCta: "Ainda não tenho cadastro"
   },
   bets: {
     greetingPrefix: "Olá",
@@ -21,24 +33,21 @@ export const publicCopy = {
     subtitle: "Escolhe os placares e envia. Depois não dá pra mudar.",
     submit: "Enviar palpites",
     submitLoading: "Enviando palpites...",
-    statusAvailable: "Aberto pra palpite",
-    statusAlreadyBet: "Palpite enviado",
-    statusClosed: "Fechado",
     emptyLoading: "Pera aí, já estamos puxando os jogos do dia...",
-    needRegister: "Pra entrar no jogo, faz teu cadastro primeiro.",
-    goToRegister: "Ir para cadastro",
+    needRegister: "Pra seguir nos palpites, faz teu acesso primeiro.",
+    goToRegister: "Ir para o acesso",
     noTodayMatches: "Hoje não tem jogo liberado pra palpite.",
     allDone: "Você já mandou teus palpites.",
-    confirmation: "Após clicar em OK não poderá ser alterada a sua aposta."
+    confirmation: "Depois de confirmar, não dá mais pra alterar teus palpites.",
+    logout: "Sair",
+    logoutConfirm: "Deseja sair da sua participação?"
   },
   success: {
     badge: "Tudo certo",
     title: "Boa sorte. Agora é jogo.",
     subtitle: "Seus palpites já estão registrados e não dá mais pra mexer neles.",
     cta: "Voltar ao início"
-  },
-  participantFound:
-    "Encontramos teu cadastro anterior. Dá pra ver o que você já mandou e seguir só nos jogos que ainda estão abertos."
+  }
 };
 
 export const stateMessages = {

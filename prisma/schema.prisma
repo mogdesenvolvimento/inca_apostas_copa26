@@ -12,6 +12,7 @@ model Participant {
   name             String
   cpf              String   @unique
   phone            String
+  passwordHash     String
   registrationCode String   @unique
   createdAt        DateTime @default(now())
   bets             Bet[]

@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
+import { getCurrentParticipant } from "@/lib/auth";
 import { stateMessages } from "@/lib/copy";
 import { getParticipantMatchBetStatusFromData } from "@/lib/matches";
 import { prisma } from "@/lib/prisma";
 import { getSaoPauloDateString } from "@/lib/timezone";
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const participantId = searchParams.get("participantId");
+export async function GET() {
+  const participant = await getCurrentParticipant();
+  if (!participant) {
+    return NextResponse.json({ error: "Faz teu acesso para continuar." }, { status: 401 });
+  }
   const today = getSaoPauloDateString();
 
   const matches = await prisma.match.findMany({
@@ -22,14 +25,12 @@ export async function GET(request: Request) {
     orderBy: { matchDate: "asc" }
   });
 
-  const existingBets = participantId
-    ? await prisma.bet.findMany({
-        where: {
-          participantId,
-          matchId: { in: matches.map((match) => match.id) }
-        }
-      })
-    : [];
+  const existingBets = await prisma.bet.findMany({
+    where: {
+      participantId: participant.id,
+      matchId: { in: matches.map((match) => match.id) }
+    }
+  });
   const betByMatch = new Map(existingBets.map((bet) => [bet.matchId, bet]));
 
   return NextResponse.json({

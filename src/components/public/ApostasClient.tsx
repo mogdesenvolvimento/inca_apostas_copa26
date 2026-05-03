@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { StateMessage } from "@/components/StateMessage";
 import { IncaLogo } from "@/components/public/IncaLogo";
+import { ParticipantLogoutButton } from "@/components/public/ParticipantLogoutButton";
 import { publicCopy, stateMessages } from "@/lib/copy";
 
 type MatchStatus = "available" | "already_bet" | "closed";
@@ -34,7 +35,7 @@ function getStatusPresentation(status: MatchStatus) {
     return {
       label: "Palpite aberto",
       disabled: false,
-      className: "bg-teal/14 text-teal border border-teal/20"
+      className: "border border-teal/20 bg-teal/14 text-teal"
     };
   }
 
@@ -47,7 +48,6 @@ function getStatusPresentation(status: MatchStatus) {
 
 export function ApostasClient() {
   const router = useRouter();
-  const [participantId, setParticipantId] = useState("");
   const [participantName, setParticipantName] = useState("");
   const [matches, setMatches] = useState<MatchItem[]>([]);
   const [scores, setScores] = useState<Record<string, { home: string; away: string }>>({});
@@ -55,32 +55,44 @@ export function ApostasClient() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [authenticated, setAuthenticated] = useState(true);
 
   useEffect(() => {
-    const id = window.localStorage.getItem("participantId") ?? "";
-    const name = window.localStorage.getItem("participantName") ?? "";
-    const previousMessage = window.sessionStorage.getItem("participantMessage") ?? "";
-    window.sessionStorage.removeItem("participantMessage");
-    setParticipantId(id);
-    setParticipantName(name);
-    setMessage(previousMessage);
+    async function loadData() {
+      try {
+        const meResponse = await fetch("/api/participant/me");
+        if (meResponse.status === 401) {
+          setAuthenticated(false);
+          router.replace("/login");
+          return;
+        }
 
-    if (!id) {
-      setLoading(false);
-      return;
-    }
+        const meData = await meResponse.json();
+        setParticipantName(meData.name ?? "");
 
-    fetch(`/api/matches?participantId=${encodeURIComponent(id)}`)
-      .then((response) => response.json())
-      .then((data) => {
+        const matchesResponse = await fetch("/api/matches");
+        if (matchesResponse.status === 401) {
+          setAuthenticated(false);
+          router.replace("/login");
+          return;
+        }
+
+        const data = await matchesResponse.json();
         setMatches(data.matches ?? []);
         if (!data.matches?.length) {
           setMessage(data.message ?? publicCopy.bets.noTodayMatches);
+        } else if (data.message) {
+          setMessage(data.message);
         }
-      })
-      .catch(() => setError("Não deu pra carregar os jogos do dia. Tenta de novo."))
-      .finally(() => setLoading(false));
-  }, []);
+      } catch {
+        setError("Não deu pra carregar os jogos do dia. Tenta de novo.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    void loadData();
+  }, [router]);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -114,10 +126,15 @@ export function ApostasClient() {
     const response = await fetch("/api/bets", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ participantId, bets })
+      body: JSON.stringify({ bets })
     });
     const data = await response.json();
     setSubmitting(false);
+
+    if (response.status === 401) {
+      router.replace("/login");
+      return;
+    }
 
     if (!response.ok) {
       setError(data.error ?? "Não deu pra registrar teus palpites.");
@@ -131,11 +148,11 @@ export function ApostasClient() {
     return <StateMessage>{publicCopy.bets.emptyLoading}</StateMessage>;
   }
 
-  if (!participantId) {
+  if (!authenticated) {
     return (
       <StateMessage>
         {publicCopy.bets.needRegister}{" "}
-        <Link href="/cadastro" className="font-bold text-teal underline">
+        <Link href="/login" className="font-bold text-teal underline">
           {publicCopy.bets.goToRegister}
         </Link>
       </StateMessage>
@@ -158,8 +175,12 @@ export function ApostasClient() {
               Apostas nos placares ficam liberadas até 30 minutos antes do início de cada jogo.
             </p>
           </div>
-          <IncaLogo variant="hero" className="hidden sm:flex" priority />
+          <div className="flex flex-col items-end gap-3">
+            <ParticipantLogoutButton className="hidden sm:inline-flex" />
+            <IncaLogo variant="hero" className="hidden sm:flex" priority />
+          </div>
         </div>
+        <ParticipantLogoutButton className="mt-4 sm:hidden" />
       </div>
 
       {message && matches.length ? <StateMessage>{message}</StateMessage> : null}

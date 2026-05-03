@@ -1,14 +1,25 @@
 import Link from "next/link";
 import Image from "next/image";
+import { redirect } from "next/navigation";
 import { PublicShell } from "@/components/PublicShell";
+import { getCurrentParticipant } from "@/lib/auth";
+import { ParticipantLogoutButton } from "@/components/public/ParticipantLogoutButton";
 import { PublicHeader } from "@/components/public/PublicHeader";
 import { publicCopy } from "@/lib/copy";
 
-export default function SuccessPage() {
+export default async function SuccessPage() {
+  const participant = await getCurrentParticipant();
+  if (!participant) {
+    redirect("/login");
+  }
+
   return (
     <PublicShell>
       <PublicHeader eyebrow="Agora é acompanhar os jogos e curtir a torcida." />
       <section className="rounded-[2rem] border border-white/70 bg-white/85 p-6 text-center shadow-card sm:p-8">
+        <div className="flex justify-end">
+          <ParticipantLogoutButton />
+        </div>
         <p className="text-sm font-semibold uppercase tracking-[0.08em] text-teal">{publicCopy.success.badge}</p>
         <Image
           src="/assets/llama-selo-home.png"
