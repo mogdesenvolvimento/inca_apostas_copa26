@@ -11,9 +11,10 @@ export async function createParticipantAccount(
   phone: string,
   password: string,
   confirmPassword: string,
+  acceptedTerms: boolean,
   client: ParticipantClient = prisma
 ) {
-  const data = validateParticipantRegistrationInput(name, cpf, phone, password, confirmPassword);
+  const data = validateParticipantRegistrationInput(name, cpf, phone, password, confirmPassword, acceptedTerms);
 
   const existing = await client.participant.findUnique({
     where: { cpf: data.cpf }
@@ -25,6 +26,7 @@ export async function createParticipantAccount(
 
   const registrationCode = await generateUniqueRegistrationCode(client);
   const passwordHash = await hashPassword(data.password);
+  const acceptedAt = new Date();
 
   return client.participant.create({
     data: {
@@ -32,7 +34,9 @@ export async function createParticipantAccount(
       cpf: data.cpf,
       phone: data.phone,
       passwordHash,
-      registrationCode
+      registrationCode,
+      termsAcceptedAt: acceptedAt,
+      privacyAcceptedAt: acceptedAt
     }
   });
 }

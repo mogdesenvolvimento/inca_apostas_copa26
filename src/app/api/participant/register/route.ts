@@ -15,6 +15,7 @@ type Body = {
   phone?: string;
   password?: string;
   confirmPassword?: string;
+  acceptedTerms?: boolean;
 };
 
 export async function POST(request: Request) {
@@ -25,7 +26,8 @@ export async function POST(request: Request) {
       body.cpf ?? "",
       body.phone ?? "",
       body.password ?? "",
-      body.confirmPassword ?? ""
+      body.confirmPassword ?? "",
+      Boolean(body.acceptedTerms)
     );
 
     const response = NextResponse.json({

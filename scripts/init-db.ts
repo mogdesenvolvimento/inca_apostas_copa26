@@ -31,7 +31,9 @@ async function main() {
     participantColumns.length > 0 &&
     (!participantColumns.includes("cpf") ||
       !participantColumns.includes("registrationCode") ||
-      !participantColumns.includes("passwordHash"));
+      !participantColumns.includes("passwordHash") ||
+      !participantColumns.includes("termsAcceptedAt") ||
+      !participantColumns.includes("privacyAcceptedAt"));
 
   if (needsParticipantRebuild) {
     await prisma.$executeRawUnsafe(`DROP TABLE IF EXISTS Bet;`);
@@ -47,6 +49,8 @@ async function main() {
       phone TEXT NOT NULL,
       passwordHash TEXT NOT NULL,
       registrationCode TEXT NOT NULL UNIQUE,
+      termsAcceptedAt DATETIME,
+      privacyAcceptedAt DATETIME,
       createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
   `);

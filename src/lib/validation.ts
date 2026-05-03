@@ -38,7 +38,8 @@ export function validateParticipantRegistrationInput(
   cpf: string,
   phone: string,
   password: string,
-  confirmPassword: string
+  confirmPassword: string,
+  acceptedTerms: boolean
 ) {
   const participant = validateParticipantInput(name, cpf, phone);
   const normalizedPassword = password.trim();
@@ -60,9 +61,14 @@ export function validateParticipantRegistrationInput(
     throw new Error("As senhas não conferem.");
   }
 
+  if (!acceptedTerms) {
+    throw new Error("Você precisa aceitar os termos para continuar.");
+  }
+
   return {
     ...participant,
-    password: normalizedPassword
+    password: normalizedPassword,
+    acceptedTerms
   };
 }
 

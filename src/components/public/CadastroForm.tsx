@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PrimaryButton } from "@/components/PrimaryButton";
@@ -35,6 +36,7 @@ export function CadastroForm() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -45,12 +47,18 @@ export function CadastroForm() {
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     setError("");
+
+    if (!acceptedTerms) {
+      setError("Você precisa aceitar os termos para continuar.");
+      return;
+    }
+
     setLoading(true);
 
     const response = await fetch("/api/participant/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, cpf, phone, password, confirmPassword })
+      body: JSON.stringify({ name, cpf, phone, password, confirmPassword, acceptedTerms })
     });
     const data = await response.json();
     setLoading(false);
@@ -145,6 +153,27 @@ export function CadastroForm() {
           />
         </label>
         <p className="text-sm text-ink/60">{publicCopy.register.passwordHint}</p>
+
+        <label className="flex items-start gap-3 rounded-2xl border border-teal/12 bg-white/70 p-4 text-sm leading-relaxed text-ink/75">
+          <input
+            type="checkbox"
+            checked={acceptedTerms}
+            onChange={(event) => setAcceptedTerms(event.target.checked)}
+            className="mt-1 h-4 w-4 rounded border-teal/40 text-teal focus:ring-teal"
+          />
+          <span>
+            Li e concordo com os{" "}
+            <Link href="/termos-de-uso" target="_blank" className="font-semibold text-teal underline">
+              Termos de Uso
+            </Link>{" "}
+            e a{" "}
+            <Link href="/politica-de-privacidade" target="_blank" className="font-semibold text-teal underline">
+              Política de Privacidade
+            </Link>
+            .
+          </span>
+        </label>
+
         {error ? <p className="rounded-2xl bg-wine/10 p-3 text-sm font-bold text-wine">{error}</p> : null}
         <PrimaryButton type="submit" disabled={loading} className="w-full">
           {loading ? publicCopy.register.submitLoading : publicCopy.register.submit}

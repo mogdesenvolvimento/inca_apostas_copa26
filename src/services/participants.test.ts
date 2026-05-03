@@ -20,7 +20,7 @@ describe("createParticipantAccount", () => {
     };
 
     await expect(
-      createParticipantAccount("Maria", "529.982.247-25", "(11) 99999-8888", "senha123", "senha123", client as any)
+      createParticipantAccount("Maria", "529.982.247-25", "(11) 99999-8888", "senha123", "senha123", true, client as any)
     ).rejects.toThrow("Já existe cadastro com esse CPF. Faz teu acesso para continuar.");
   });
 
@@ -47,6 +47,7 @@ describe("createParticipantAccount", () => {
       "+55 (21) 98765-4321",
       "senha123",
       "senha123",
+      true,
       client as any
     );
 
@@ -57,7 +58,9 @@ describe("createParticipantAccount", () => {
         cpf: "52998224725",
         phone: "5521987654321",
         passwordHash: "hashed-password",
-        registrationCode: "INCA-7F3K9D"
+        registrationCode: "INCA-7F3K9D",
+        termsAcceptedAt: expect.any(Date),
+        privacyAcceptedAt: expect.any(Date)
       }
     });
   });
