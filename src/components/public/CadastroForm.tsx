@@ -36,6 +36,7 @@ export function CadastroForm() {
   const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
 
   const isModalOpen = useMemo(() => Boolean(confirmState), [confirmState]);
@@ -58,6 +59,7 @@ export function CadastroForm() {
       return;
     }
 
+    setCopied(false);
     setConfirmState({
       participantId: data.participantId,
       name: data.name,
@@ -66,6 +68,16 @@ export function CadastroForm() {
       registrationCode: data.registrationCode,
       message: data.message ?? null
     });
+  }
+
+  async function handleCopyCode() {
+    if (!confirmState?.registrationCode) {
+      return;
+    }
+
+    await navigator.clipboard.writeText(confirmState.registrationCode);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1800);
   }
 
   function handleContinue() {
@@ -129,26 +141,43 @@ export function CadastroForm() {
 
       {isModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/55 p-4">
-          <div className="w-full max-w-md rounded-[1.75rem] bg-white p-6 shadow-card">
-            <p className="text-sm font-semibold uppercase tracking-[0.08em] text-teal">Cadastro confirmado</p>
-            <p className="mt-4 text-sm leading-relaxed text-ink/75">
-              Guarde essas informações. Se seu palpite acertar, você deverá apresentar este código e o print desta tela
-              para receber o prêmio.
+          <div className="w-full max-w-md rounded-[1.9rem] bg-white p-6 shadow-card">
+            <p className="text-sm font-semibold uppercase tracking-[0.12em] text-teal">Cadastro confirmado</p>
+            <p className="mt-4 text-sm font-medium leading-relaxed text-ink/80">
+              Salve o código ou o print desta tela para apresentar no caso de acertos nas apostas.
             </p>
-            <div className="mt-5 space-y-3 rounded-2xl bg-field p-4 text-sm text-ink">
+            <p className="mt-2 text-xs leading-relaxed text-ink/55">Esse código identifica sua participação no sistema.</p>
+
+            <div className="mt-5 rounded-[1.6rem] border border-teal/20 bg-gradient-to-br from-field via-white to-teal/10 p-5 shadow-sm">
+              <p className="text-xs font-medium uppercase tracking-[0.14em] text-teal/80">Seu código</p>
+              <p className="mt-2 break-all font-mono text-[1.85rem] font-bold tracking-[0.16em] text-navy sm:text-[2.1rem]">
+                {confirmState?.registrationCode}
+              </p>
+              <p className="mt-2 text-xs text-ink/60">Guarde este código</p>
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+                <button
+                  type="button"
+                  onClick={handleCopyCode}
+                  className="rounded-2xl border border-teal/25 bg-white px-4 py-3 text-sm font-semibold text-teal transition hover:bg-teal/5"
+                >
+                  Copiar código
+                </button>
+                {copied ? <span className="text-sm font-medium text-teal">Código copiado</span> : null}
+              </div>
+            </div>
+
+            <div className="mt-5 space-y-3 rounded-[1.4rem] bg-field p-4 text-sm text-ink/80">
               <p>
-                <strong>Nome:</strong> {confirmState?.name}
+                <strong className="text-ink">Nome:</strong> {confirmState?.name}
               </p>
               <p>
-                <strong>CPF:</strong> {confirmState?.cpfMasked}
+                <strong className="text-ink">CPF:</strong> {confirmState?.cpfMasked}
               </p>
               <p>
-                <strong>Telefone:</strong> {confirmState?.phone}
-              </p>
-              <p>
-                <strong>Código:</strong> {confirmState?.registrationCode}
+                <strong className="text-ink">Telefone:</strong> {confirmState?.phone}
               </p>
             </div>
+
             <PrimaryButton type="button" onClick={handleContinue} className="mt-5 w-full">
               Salvar e continuar
             </PrimaryButton>
