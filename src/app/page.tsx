@@ -38,15 +38,34 @@ export default function HomePage() {
             <p className="max-w-[520px] text-[13px] leading-[1.4] text-[#6B7280] opacity-80">{publicCopy.home.legal}</p>
           </div>
 
-          <Image
-            src="/assets/llama-selo-home.png"
-            alt="Selo da ação Copa do Inca Bar com lhama"
-            width={320}
-            height={320}
-            sizes="(max-width: 768px) 260px, (max-width: 1280px) 22vw, 320px"
-            className="h-auto w-[clamp(180px,60vw,260px)] justify-self-center object-contain md:w-[clamp(200px,32vw,280px)] lg:w-[clamp(220px,22vw,320px)] lg:justify-self-end lg:self-center lg:-translate-y-5"
-            priority
-          />
+          <div className="flex justify-self-center lg:justify-self-end">
+            <div className="flex w-full max-w-[320px] flex-col items-center gap-4 lg:max-w-[340px] lg:-translate-y-5">
+              <Image
+                src="/assets/llama-selo-home-v2.png"
+                alt="Selo da ação Copa do Inca Bar com lhama"
+                width={320}
+                height={320}
+                sizes="(max-width: 768px) 260px, (max-width: 1280px) 22vw, 320px"
+                className="h-auto w-[clamp(180px,60vw,260px)] object-contain md:w-[clamp(200px,32vw,280px)] lg:w-[clamp(220px,22vw,320px)]"
+                priority
+              />
+
+              <div className="-mt-[3px] flex w-full max-w-[220px] flex-col items-center gap-3">
+                <div className="h-px w-16 bg-gradient-to-r from-transparent via-teal/30 to-transparent" />
+                <Image
+                  src="/assets/fil-logo.png"
+                  alt="Logo da Fil Cerveja Artesanal"
+                  width={180}
+                  height={180}
+                  sizes="(max-width: 768px) 120px, 160px"
+                  className="h-auto w-[clamp(110px,28vw,150px)] object-contain"
+                />
+                <p className="text-center text-[11px] font-medium uppercase tracking-[0.18em] text-ink/52">
+                  Parceria oficial do Inca na Copa 2026
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
     </PublicShell>

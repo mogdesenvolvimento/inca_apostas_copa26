@@ -22,7 +22,7 @@ export default async function SuccessPage() {
         </div>
         <p className="text-sm font-semibold uppercase tracking-[0.08em] text-teal">{publicCopy.success.badge}</p>
         <Image
-          src="/assets/llama-selo-home.png"
+          src="/assets/llama-selo-home-v2.png"
           alt="Selo da ação Copa do Inca Bar com lhama"
           width={220}
           height={220}
