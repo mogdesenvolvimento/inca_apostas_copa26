@@ -29,6 +29,25 @@ type ConfirmState = {
   message: string | null;
 };
 
+function EyeIcon({ crossed = false }: { crossed?: boolean }) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z" />
+      <circle cx="12" cy="12" r="3" />
+      {crossed ? <path d="M4 4 20 20" /> : null}
+    </svg>
+  );
+}
+
 export function CadastroForm() {
   const router = useRouter();
   const [name, setName] = useState("");
@@ -36,6 +55,8 @@ export function CadastroForm() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -130,27 +151,49 @@ export function CadastroForm() {
         </label>
         <label className="block">
           <span className="mb-2 block font-bold text-ink">Senha</span>
-          <input
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            required
-            minLength={6}
-            type="password"
-            className="w-full rounded-2xl border border-teal/20 bg-field px-4 py-4 text-lg outline-none ring-teal/30 transition focus:ring-4"
-            placeholder="Crie uma senha"
-          />
+          <div className="relative">
+            <input
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              required
+              minLength={6}
+              type={showPassword ? "text" : "password"}
+              className="w-full rounded-2xl border border-teal/20 bg-field px-4 py-4 pr-14 text-lg outline-none ring-teal/30 transition focus:ring-4"
+              placeholder="Crie uma senha"
+            />
+            <button
+              type="button"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => setShowPassword((current) => !current)}
+              aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+              className="absolute inset-y-0 right-0 flex w-14 cursor-pointer items-center justify-center text-ink/50 transition hover:text-ink"
+            >
+              <EyeIcon crossed={!showPassword} />
+            </button>
+          </div>
         </label>
         <label className="block">
           <span className="mb-2 block font-bold text-ink">Confirmar senha</span>
-          <input
-            value={confirmPassword}
-            onChange={(event) => setConfirmPassword(event.target.value)}
-            required
-            minLength={6}
-            type="password"
-            className="w-full rounded-2xl border border-teal/20 bg-field px-4 py-4 text-lg outline-none ring-teal/30 transition focus:ring-4"
-            placeholder="Repita sua senha"
-          />
+          <div className="relative">
+            <input
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              required
+              minLength={6}
+              type={showConfirmPassword ? "text" : "password"}
+              className="w-full rounded-2xl border border-teal/20 bg-field px-4 py-4 pr-14 text-lg outline-none ring-teal/30 transition focus:ring-4"
+              placeholder="Repita sua senha"
+            />
+            <button
+              type="button"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => setShowConfirmPassword((current) => !current)}
+              aria-label={showConfirmPassword ? "Ocultar confirmaÃ§Ã£o de senha" : "Mostrar confirmaÃ§Ã£o de senha"}
+              className="absolute inset-y-0 right-0 flex w-14 cursor-pointer items-center justify-center text-ink/50 transition hover:text-ink"
+            >
+              <EyeIcon crossed={!showConfirmPassword} />
+            </button>
+          </div>
         </label>
         <p className="text-sm text-ink/60">{publicCopy.register.passwordHint}</p>
 
