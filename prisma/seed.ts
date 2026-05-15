@@ -24,6 +24,10 @@ function loadMatches(fileName: string): SeedMatch[] {
   return JSON.parse(fs.readFileSync(filePath, "utf8")) as SeedMatch[];
 }
 
+function buildMatchId(match: SeedMatch) {
+  return `group-${String(match.matchNumber).padStart(3, "0")}-${match.group}-${match.matchDate}-${match.matchTime}-${match.homeTeam}-${match.awayTeam}`;
+}
+
 async function main() {
   const adminEmail = process.env.ADMIN_EMAIL ?? "admin@inca.local";
   const adminPassword = process.env.ADMIN_PASSWORD ?? "admin123";
@@ -38,19 +42,38 @@ async function main() {
     select: { id: true }
   });
 
-  const deletedBets = await prisma.bet.deleteMany();
-  const deletedMatches = await prisma.match.deleteMany();
-  const deletedParticipants = await prisma.participant.deleteMany();
+  const [preservedBets, preservedMatches, preservedParticipants] = await Promise.all([
+    prisma.bet.count(),
+    prisma.match.count(),
+    prisma.participant.count()
+  ]);
 
-  console.log(`[seed] Bets removidas: ${deletedBets.count}`);
-  console.log(`[seed] Matches removidas: ${deletedMatches.count}`);
-  console.log(`[seed] Participants removidos: ${deletedParticipants.count}`);
+  console.log(`[seed] Bets preservadas: ${preservedBets}`);
+  console.log(`[seed] Matches existentes antes do sync: ${preservedMatches}`);
+  console.log(`[seed] Participants preservados: ${preservedParticipants}`);
 
-  const insertedMatches = await prisma.$transaction(
+  const matchIds = matches.map(buildMatchId);
+  const existingSeedMatches = await prisma.match.findMany({
+    where: { id: { in: matchIds } },
+    select: { id: true }
+  });
+  const existingMatchIds = new Set(existingSeedMatches.map((match) => match.id));
+
+  await prisma.$transaction(
     matches.map((match) =>
-      prisma.match.create({
-        data: {
-          id: `group-${String(match.matchNumber).padStart(3, "0")}-${match.group}-${match.matchDate}-${match.matchTime}-${match.homeTeam}-${match.awayTeam}`,
+      prisma.match.upsert({
+        where: { id: buildMatchId(match) },
+        update: {
+          groupName: `Grupo ${match.group}`,
+          matchDate: match.matchDate,
+          matchTime: match.matchTime,
+          kickoffAt: new Date(match.kickoffAt),
+          homeTeam: match.homeTeam,
+          awayTeam: match.awayTeam,
+          isActive: match.status === "scheduled"
+        },
+        create: {
+          id: buildMatchId(match),
           groupName: `Grupo ${match.group}`,
           matchDate: match.matchDate,
           matchTime: match.matchTime,
@@ -62,6 +85,9 @@ async function main() {
       })
     )
   );
+
+  const createdMatches = matches.length - existingMatchIds.size;
+  const updatedMatches = existingMatchIds.size;
 
   const passwordHash = await bcrypt.hash(adminPassword, 12);
 
@@ -80,7 +106,9 @@ async function main() {
     }
   });
 
-  console.log(`[seed] Matches inseridas: ${insertedMatches.length}`);
+  console.log(`[seed] Matches criadas: ${createdMatches}`);
+  console.log(`[seed] Matches atualizadas: ${updatedMatches}`);
+  console.log(`[seed] Matches no arquivo de seed: ${matches.length}`);
   console.log(`[seed] Admin ${existingAdmin ? "preservado/atualizado" : "criado"}: ${adminEmail}`);
 }
 
