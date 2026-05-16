@@ -50,15 +50,15 @@ export default function HomePage() {
                 priority
               />
 
-              <div className="-mt-[3px] flex w-full max-w-[220px] flex-col items-center gap-3">
-                <div className="h-px w-16 bg-gradient-to-r from-transparent via-teal/30 to-transparent" />
+              <div className="-mt-2 flex w-full max-w-[240px] flex-col items-center gap-2">
+                <div className="h-px w-20 bg-gradient-to-r from-transparent via-teal/30 to-transparent" />
                 <Image
                   src="/assets/fil-logo.png"
                   alt="Logo da Fil Cerveja Artesanal"
-                  width={180}
-                  height={180}
-                  sizes="(max-width: 768px) 120px, 160px"
-                  className="h-auto w-[clamp(110px,28vw,150px)] object-contain"
+                  width={220}
+                  height={220}
+                  sizes="(max-width: 768px) 130px, 180px"
+                  className="h-auto w-[clamp(125px,30vw,180px)] object-contain"
                 />
                 <p className="text-center text-[11px] font-medium uppercase tracking-[0.18em] text-ink/52">
                   Parceria oficial do Inca na Copa 2026

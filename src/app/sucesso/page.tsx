@@ -30,6 +30,20 @@ export default async function SuccessPage() {
           className="mx-auto mt-4 h-auto w-[clamp(120px,38vw,180px)] object-contain sm:w-[clamp(160px,26vw,220px)]"
           priority
         />
+        <div className="-mt-1 flex flex-col items-center gap-2">
+          <div className="h-px w-20 bg-gradient-to-r from-transparent via-teal/30 to-transparent" />
+          <Image
+            src="/assets/fil-logo.png"
+            alt="Logo da Fil Cerveja Artesanal"
+            width={220}
+            height={220}
+            sizes="(max-width: 640px) 130px, 180px"
+            className="h-auto w-[clamp(125px,30vw,180px)] object-contain"
+          />
+          <p className="text-center text-[11px] font-medium uppercase tracking-[0.18em] text-ink/52">
+            Parceria oficial do Inca na Copa 2026
+          </p>
+        </div>
         <h1 className="font-heading mx-auto mt-4 max-w-[12ch] text-[clamp(2rem,7vw,3.25rem)] font-bold leading-[1.08] text-ink">
           {publicCopy.success.title}
         </h1>
