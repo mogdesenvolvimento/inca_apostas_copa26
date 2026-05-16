@@ -20,7 +20,7 @@ export default async function SuccessPage() {
         <div className="flex justify-end">
           <ParticipantLogoutButton />
         </div>
-        <p className="text-sm font-semibold uppercase tracking-[0.08em] text-teal">{publicCopy.success.badge}</p>
+        <p className="text-base font-semibold uppercase tracking-[0.08em] text-teal sm:text-lg">{publicCopy.success.badge}</p>
         <Image
           src="/assets/llama-selo-home-v2.png"
           alt="Selo da ação Copa do Inca Bar com lhama"
@@ -44,10 +44,10 @@ export default async function SuccessPage() {
             Parceria oficial do Inca na Copa 2026
           </p>
         </div>
-        <h1 className="font-heading mx-auto mt-4 max-w-[12ch] text-[clamp(2rem,7vw,3.25rem)] font-bold leading-[1.08] text-ink">
+        <h1 className="font-heading mx-auto mt-4 max-w-[12ch] whitespace-pre-line text-[clamp(2rem,7vw,3.25rem)] font-bold leading-[1.02] text-ink">
           {publicCopy.success.title}
         </h1>
-        <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-ink/70 sm:text-base">{publicCopy.success.subtitle}</p>
+        <p className="mx-auto mt-3 max-w-md text-center text-xs leading-relaxed text-ink/62 sm:text-sm">{publicCopy.success.subtitle}</p>
         <Link href="/" className="mt-6 inline-flex rounded-2xl bg-gradient-to-r from-wine via-clay to-amber px-6 py-4 font-bold text-white">
           {publicCopy.success.cta}
         </Link>
