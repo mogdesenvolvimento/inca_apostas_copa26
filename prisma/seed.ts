@@ -21,7 +21,9 @@ type SeedMatch = {
 
 function loadMatches(fileName: string): SeedMatch[] {
   const filePath = path.join(process.cwd(), "prisma", "data", fileName);
-  return JSON.parse(fs.readFileSync(filePath, "utf8")) as SeedMatch[];
+  const rawContent = fs.readFileSync(filePath, "utf8");
+  const normalizedContent = rawContent.replace(/^\uFEFF/, "");
+  return JSON.parse(normalizedContent) as SeedMatch[];
 }
 
 function buildMatchId(match: SeedMatch) {
