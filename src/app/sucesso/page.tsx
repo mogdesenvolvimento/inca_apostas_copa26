@@ -41,7 +41,7 @@ export default async function SuccessPage() {
             className="h-auto w-[clamp(125px,30vw,180px)] object-contain"
           />
           <p className="text-center text-[11px] font-medium uppercase tracking-[0.18em] text-ink/52">
-            Promoção especial do Inca para os dias de jogo
+            Parceiro do Inca Bar para os dias de Jogos
           </p>
         </div>
         <h1 className="font-heading mx-auto mt-4 max-w-[12ch] whitespace-pre-line text-[clamp(2rem,7vw,3.25rem)] font-bold leading-[1.02] text-ink">
