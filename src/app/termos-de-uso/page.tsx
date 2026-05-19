@@ -2,10 +2,14 @@ import { LegalPageLayout } from "@/components/public/LegalPageLayout";
 
 export default function TermosDeUsoPage() {
   return (
-    <LegalPageLayout title="Termos de Uso" subtitle="Copa Inca Bar">
+    <LegalPageLayout title="Termos de Uso" subtitle="Desafio de Palpites do Inca Bar">
       <p>
-        A plataforma Copa Inca Bar é uma experiência promocional criada para interação do público com os jogos da Copa
-        2026.
+        A plataforma Desafio de Palpites do Inca Bar é uma experiência promocional criada para interação do público com
+        os jogos disponíveis na plataforma.
+      </p>
+      <p>
+        Esta é uma ação promocional independente do Inca Bar, sem vínculo, patrocínio, autorização ou associação
+        oficial com FIFA, CBF ou qualquer entidade organizadora de competições esportivas.
       </p>
 
       <section>
@@ -21,7 +25,7 @@ export default function TermosDeUsoPage() {
           <li>não caracteriza casa de apostas;</li>
           <li>não constitui jogo de azar com aposta monetária.</li>
         </ul>
-        <p className="mt-4">A participação é promocional e vinculada à ação do Inca Bar.</p>
+        <p className="mt-4">A participação é promocional e vinculada a uma ação independente do Inca Bar.</p>
       </section>
 
       <section>
@@ -48,7 +52,7 @@ export default function TermosDeUsoPage() {
       <section>
         <h2 className="font-heading text-2xl font-bold text-ink">4. Código de participação</h2>
         <p className="mt-2">Após o cadastro, o sistema gera um código de participação.</p>
-        <p className="mt-2">O participante deve salvar o código ou o print da tela para apresentar em caso de acerto nas apostas.</p>
+        <p className="mt-2">O participante deve salvar o código ou o print da tela para apresentar em caso de acerto nos palpites.</p>
         <p className="mt-2">O Inca Bar poderá solicitar esse código para conferência e validação da participação.</p>
       </section>
 

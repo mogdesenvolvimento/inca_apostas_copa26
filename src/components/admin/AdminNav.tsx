@@ -17,7 +17,7 @@ export function AdminNav({ adminName }: { adminName: string }) {
       <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.25em] text-leaf">Admin</p>
-          <p className="font-display text-2xl font-bold text-ink">Bolão Copa 2026</p>
+          <p className="font-display text-2xl font-bold text-ink">Palpites Inca</p>
         </div>
         <nav className="flex flex-wrap items-center gap-2 text-sm font-bold">
           <Link className="rounded-full bg-ink/5 px-4 py-2 hover:bg-gold/30" href="/admin/dashboard">

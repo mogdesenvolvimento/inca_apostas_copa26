@@ -1,6 +1,6 @@
-# Bolão Recreativo Copa 2026
+# Desafio de Palpites do Inca
 
-Projeto web full stack para coleta recreativa/promocional de palpites de placar por jogo. Não há pagamentos, PIX, carteira, saldo, odds, saque, depósito, ranking monetário ou premiação em dinheiro.
+Projeto web full stack para coleta promocional de palpites de placar por jogo. Não há pagamentos, PIX, carteira, saldo, odds, saque, depósito, ranking monetário ou premiação em dinheiro.
 
 ## Stack
 
@@ -83,7 +83,7 @@ Se o executável `schema-engine` do Prisma for bloqueado pelo ambiente local no 
 npm run db:init
 ```
 
-Popule o banco com todos os jogos oficiais informados e o admin inicial:
+Popule o banco com os jogos disponíveis no seed e o admin inicial:
 
 ```bash
 npm run prisma:seed
@@ -121,21 +121,25 @@ Os testes cobrem:
 
 - `normalizePhone`
 - `isMatchAvailableForBet`
-- `findOrCreateParticipantByPhone`
+- autenticação e localização de participante por CPF
 - bloqueio de duplicidade de aposta por `participantId + matchId`
 
 ## Regras importantes
 
-- O telefone é normalizado e usado como identificador único.
-- Cada participante só pode apostar uma vez por jogo.
+- O CPF é normalizado e usado como identificador único do participante.
+- Cada participante só pode palpitar uma vez por jogo.
 - O sistema lista jogos do dia atual em `America/Sao_Paulo`.
-- A aposta fecha 30 minutos antes do horário oficial (`kickoffAt - 30min`).
-- Após enviada, a aposta não pode ser editada.
+- O palpite fecha 30 minutos antes do horário oficial (`kickoffAt - 30min`).
+- Após enviado, o palpite não pode ser editado.
 - A conferência de vencedores é manual pelo painel administrativo.
 
 ## Limitações
 
-- O sistema é recreativo/promocional e não implementa nenhuma funcionalidade financeira.
+- O sistema é promocional e não implementa nenhuma funcionalidade financeira.
 - Não há apuração automática de vencedores.
 - A exportação CSV está disponível em `/api/admin/bets?export=csv` e também pelo botão da tela de apostas admin.
 - O timezone padrão de regra de negócio é `America/Sao_Paulo`.
+
+## Aviso
+
+Esta é uma ação promocional independente do Inca Bar, sem vínculo, patrocínio, autorização ou associação oficial com FIFA, CBF ou qualquer entidade organizadora de competições esportivas.

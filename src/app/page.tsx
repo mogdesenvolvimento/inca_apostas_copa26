@@ -42,7 +42,7 @@ export default function HomePage() {
             <div className="flex w-full max-w-[320px] flex-col items-center gap-4 lg:max-w-[340px] lg:-translate-y-5">
               <Image
                 src="/assets/llama-selo-home-v2.png"
-                alt="Selo da ação Copa do Inca Bar com lhama"
+                alt="Mascote do desafio de palpites do Inca Bar"
                 width={320}
                 height={320}
                 sizes="(max-width: 768px) 260px, (max-width: 1280px) 22vw, 320px"
@@ -61,7 +61,7 @@ export default function HomePage() {
                   className="h-auto w-[clamp(125px,30vw,180px)] object-contain"
                 />
                 <p className="text-center text-[11px] font-medium uppercase tracking-[0.18em] text-ink/52">
-                  Parceria oficial do Inca na Copa 2026
+                  Parceiro do Inca Bar para os dias de Jogos
                 </p>
               </div>
             </div>

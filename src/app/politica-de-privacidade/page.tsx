@@ -2,10 +2,15 @@ import { LegalPageLayout } from "@/components/public/LegalPageLayout";
 
 export default function PoliticaDePrivacidadePage() {
   return (
-    <LegalPageLayout title="Política de Privacidade" subtitle="Copa Inca Bar">
+    <LegalPageLayout title="Política de Privacidade" subtitle="Desafio de Palpites do Inca Bar">
       <p>
-        Esta Política de Privacidade explica como os dados informados na plataforma Copa Inca Bar são utilizados para
-        validar a participação, organizar a ação promocional e permitir contato relacionado às ações do Inca Bar.
+        Esta Política de Privacidade explica como os dados informados na plataforma Desafio de Palpites do Inca Bar são
+        utilizados para validar a participação, organizar a ação promocional e permitir contato relacionado às ações
+        do Inca Bar.
+      </p>
+      <p>
+        Esta é uma ação promocional independente do Inca Bar, sem vínculo, patrocínio, autorização ou associação
+        oficial com FIFA, CBF ou qualquer entidade organizadora de competições esportivas.
       </p>
 
       <section>
@@ -50,9 +55,7 @@ export default function PoliticaDePrivacidadePage() {
 
       <section>
         <h2 className="font-heading text-2xl font-bold text-ink">3. Compartilhamento</h2>
-        <p className="mt-2">
-          O Inca Bar não comercializa dados pessoais dos participantes.
-        </p>
+        <p className="mt-2">O Inca Bar não comercializa dados pessoais dos participantes.</p>
         <p className="mt-2">
           Os dados poderão ser tratados por parceiros de tecnologia responsáveis pela operação da plataforma, apenas
           quando necessário para funcionamento do sistema.

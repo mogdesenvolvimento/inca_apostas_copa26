@@ -33,8 +33,8 @@ async function main() {
   const adminPassword = process.env.ADMIN_PASSWORD ?? "admin123";
   const adminName = process.env.ADMIN_NAME ?? "Administrador";
   const matches = [
-    ...loadMatches("worldCup2026ProductionTestMatches.seed.json"),
-    ...loadMatches("worldCup2026GroupStage.seed.json")
+    ...loadMatches("incaPredictionsTestMatches.seed.json"),
+    ...loadMatches("internationalFootballSeasonGroupStage.seed.json")
   ];
 
   const existingAdmin = await prisma.adminUser.findUnique({

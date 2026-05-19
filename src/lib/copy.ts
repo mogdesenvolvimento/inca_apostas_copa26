@@ -1,16 +1,16 @@
 export const publicCopy = {
   home: {
-    badge: "Palpites dos Jogos",
-    title: "Dê seus palpites e entre no clima da Copa no Inca",
-    subtitle: "Escolhe os placares dos jogos do dia e participa com a galera.",
-    supporting: "Jogo grande, mesa cheia e torcida na pilha — do jeito que o Inca gosta.",
+    badge: "Desafio de Palpites",
+    title: "Entre no clima dos jogos e manda teus palpites no Inca",
+    subtitle: "Escolhe os placares do dia e acompanha a rodada com a galera.",
+    supporting: "Uma brincadeira promocional do Inca Bar pra deixar os dias de futebol ainda mais divertidos.",
     legal: "* Participação promocional, sem pagamentos ou vínculo com apostas financeiras reais.",
     cta: "Criar cadastro",
     secondaryCta: "Já tenho cadastro"
   },
   register: {
     title: "Entra na jogada",
-    subtitle: "Cria teu cadastro rapidinho pra liberar os jogos.",
+    subtitle: "Cria teu cadastro rapidinho pra liberar os jogos do dia.",
     hint: "Cadastre-se",
     supporting: "Teu CPF ajuda a garantir uma participação por pessoa.",
     passwordHint: "Você vai usar essa senha para voltar aos seus palpites.",

@@ -23,7 +23,7 @@ export default async function SuccessPage() {
         <p className="text-base font-semibold uppercase tracking-[0.08em] text-teal sm:text-lg">{publicCopy.success.badge}</p>
         <Image
           src="/assets/llama-selo-home-v2.png"
-          alt="Selo da ação Copa do Inca Bar com lhama"
+          alt="Mascote do desafio de palpites do Inca Bar"
           width={220}
           height={220}
           sizes="(max-width: 640px) 150px, (max-width: 1024px) 180px, 220px"
@@ -41,7 +41,7 @@ export default async function SuccessPage() {
             className="h-auto w-[clamp(125px,30vw,180px)] object-contain"
           />
           <p className="text-center text-[11px] font-medium uppercase tracking-[0.18em] text-ink/52">
-            Parceria oficial do Inca na Copa 2026
+            Promoção especial do Inca para os dias de jogo
           </p>
         </div>
         <h1 className="font-heading mx-auto mt-4 max-w-[12ch] whitespace-pre-line text-[clamp(2rem,7vw,3.25rem)] font-bold leading-[1.02] text-ink">
