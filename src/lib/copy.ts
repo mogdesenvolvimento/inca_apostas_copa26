@@ -3,7 +3,7 @@ export const publicCopy = {
     badge: "Desafio de Palpites",
     title: "Entre no clima dos jogos e manda teus palpites no Inca",
     subtitle: "Escolhe os placares do dia e acompanha a rodada com a galera.",
-    supporting: "Uma brincadeira promocional do Inca Bar pra deixar os dias de futebol ainda mais divertidos.",
+    supporting: "Ação promocional do Inca Bar para dos dias de jogos ficarem ainda mais divertidos.",
     legal: "* Participação promocional, sem pagamentos ou vínculo com apostas financeiras reais.",
     cta: "Criar cadastro",
     secondaryCta: "Já tenho cadastro"
