@@ -25,7 +25,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       ok: true,
-      message: `Se o CPF estiver certo, o link de redefinição será enviado para ${maskEmail(participant.email)}.`
+      message: `Email foi enviado para ${maskEmail(participant.email)}.`
     });
   } catch (error) {
     return jsonError(error instanceof Error ? error.message : "Não foi possível iniciar a redefinição de senha.");
