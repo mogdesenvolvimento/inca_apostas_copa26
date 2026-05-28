@@ -40,14 +40,24 @@ export function validateParticipantInput(name: string, cpf: string, phone: strin
 export function validateParticipantRegistrationInput(
   name: string,
   cpf: string,
+  email: string,
   phone: string,
   password: string,
   confirmPassword: string,
   acceptedTerms: boolean
 ) {
   const participant = validateParticipantInput(name, cpf, phone);
+  const normalizedEmail = email.trim().toLowerCase();
   const normalizedPassword = password.trim();
   const normalizedConfirmPassword = confirmPassword.trim();
+
+  if (!normalizedEmail) {
+    throw new Error("E-mail é obrigatório.");
+  }
+
+  if (!isValidEmail(normalizedEmail)) {
+    throw new Error("Informe um e-mail válido.");
+  }
 
   if (!normalizedPassword) {
     throw new Error("Senha é obrigatória.");
@@ -71,6 +81,7 @@ export function validateParticipantRegistrationInput(
 
   return {
     ...participant,
+    email: normalizedEmail,
     password: normalizedPassword,
     acceptedTerms
   };
@@ -108,9 +119,8 @@ export function validateScore(score: unknown) {
   return value;
 }
 
-export function validatePasswordResetRequestInput(cpf: string, email?: string) {
+export function validatePasswordResetRequestInput(cpf: string) {
   const normalizedCpf = normalizeCpf(cpf);
-  const normalizedEmail = (email ?? "").trim().toLowerCase();
 
   if (!cpf.trim()) {
     throw new Error("CPF é obrigatório.");
@@ -120,19 +130,8 @@ export function validatePasswordResetRequestInput(cpf: string, email?: string) {
     throw new Error("Informe um CPF válido.");
   }
 
-  if (email !== undefined) {
-    if (!normalizedEmail) {
-      throw new Error("Informe teu e-mail para continuar.");
-    }
-
-    if (!isValidEmail(normalizedEmail)) {
-      throw new Error("Informe um e-mail válido.");
-    }
-  }
-
   return {
-    cpf: normalizedCpf,
-    email: normalizedEmail
+    cpf: normalizedCpf
   };
 }
 

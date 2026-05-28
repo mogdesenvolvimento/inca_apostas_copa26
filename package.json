@@ -20,7 +20,8 @@
     "prisma:push": "prisma db push",
     "prisma:seed": "prisma db seed",
     "seed": "tsx prisma/seed.ts",
-    "db:init": "tsx scripts/init-db.ts"
+    "db:init": "tsx scripts/init-db.ts",
+    "db:clear-participants": "tsx scripts/clear-participants.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

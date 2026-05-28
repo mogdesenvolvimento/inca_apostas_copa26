@@ -14,13 +14,14 @@ type ParticipantClient = Pick<typeof prisma, "participant">;
 export async function createParticipantAccount(
   name: string,
   cpf: string,
+  email: string,
   phone: string,
   password: string,
   confirmPassword: string,
   acceptedTerms: boolean,
   client: ParticipantClient = prisma
 ) {
-  const data = validateParticipantRegistrationInput(name, cpf, phone, password, confirmPassword, acceptedTerms);
+  const data = validateParticipantRegistrationInput(name, cpf, email, phone, password, confirmPassword, acceptedTerms);
 
   const existing = await client.participant.findUnique({
     where: { cpf: data.cpf }
@@ -38,6 +39,7 @@ export async function createParticipantAccount(
     data: {
       name: data.name,
       cpf: data.cpf,
+      email: data.email,
       phone: data.phone,
       passwordHash,
       registrationCode,
@@ -72,7 +74,8 @@ export async function findParticipantForPasswordReset(cpf: string, client: Parti
     select: {
       id: true,
       name: true,
-      cpf: true
+      cpf: true,
+      email: true
     }
   });
 
@@ -80,19 +83,35 @@ export async function findParticipantForPasswordReset(cpf: string, client: Parti
     throw new Error("Não encontramos cadastro com esse CPF.");
   }
 
-  return participant;
+  if (!participant.email) {
+    throw new Error("Esse cadastro ainda não tem e-mail de recuperação configurado. Fala com o Inca Bar para atualizar teu acesso.");
+  }
+
+  return {
+    ...participant,
+    email: participant.email
+  };
 }
 
-export async function resetParticipantPassword(token: string, password: string, confirmPassword: string, client: ParticipantClient = prisma) {
+export async function resetParticipantPassword(
+  token: string,
+  password: string,
+  confirmPassword: string,
+  client: ParticipantClient = prisma
+) {
   const tokenPayload = verifyPasswordResetToken(token);
   const credentials = validatePasswordResetConfirmInput(password, confirmPassword);
   const participant = await client.participant.findUnique({
     where: { id: tokenPayload.participantId },
-    select: { id: true }
+    select: { id: true, email: true }
   });
 
   if (!participant) {
     throw new Error("Não encontramos esse cadastro para redefinir a senha.");
+  }
+
+  if (!participant.email || participant.email !== tokenPayload.email) {
+    throw new Error("Esse link de redefinição não é mais válido para este cadastro.");
   }
 
   const passwordHash = await hashPassword(credentials.password);

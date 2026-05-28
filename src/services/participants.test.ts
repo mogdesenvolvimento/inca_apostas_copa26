@@ -20,15 +20,16 @@ describe("createParticipantAccount", () => {
     };
 
     await expect(
-      createParticipantAccount("Maria", "529.982.247-25", "(11) 99999-8888", "senha123", "senha123", true, client as any)
+      createParticipantAccount("Maria", "529.982.247-25", "maria@email.com", "(11) 99999-8888", "senha123", "senha123", true, client as any)
     ).rejects.toThrow("Já existe cadastro com esse CPF. Faz teu acesso para continuar.");
   });
 
-  it("cria participante com hash de senha e código único", async () => {
+  it("cria participante com e-mail, hash de senha e código único", async () => {
     const created = {
       id: "p2",
       name: "João Silva",
       cpf: "52998224725",
+      email: "joao@email.com",
       phone: "5521987654321",
       passwordHash: "hashed-password",
       registrationCode: "INCA-7F3K9D",
@@ -44,6 +45,7 @@ describe("createParticipantAccount", () => {
     const result = await createParticipantAccount(
       " João Silva ",
       "529.982.247-25",
+      "JOAO@EMAIL.COM",
       "+55 (21) 98765-4321",
       "senha123",
       "senha123",
@@ -56,6 +58,7 @@ describe("createParticipantAccount", () => {
       data: {
         name: "João Silva",
         cpf: "52998224725",
+        email: "joao@email.com",
         phone: "5521987654321",
         passwordHash: "hashed-password",
         registrationCode: "INCA-7F3K9D",
@@ -84,6 +87,7 @@ describe("authenticateParticipant", () => {
       id: "p3",
       name: "Lucas",
       cpf: "52998224725",
+      email: "lucas@email.com",
       phone: "5511999998888",
       passwordHash: "hashed-password",
       registrationCode: "INCA-AAAA11",

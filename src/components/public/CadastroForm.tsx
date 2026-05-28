@@ -24,6 +24,7 @@ function maskCpf(value: string) {
 type ConfirmState = {
   name: string;
   cpfMasked: string;
+  email: string | null;
   phone: string;
   registrationCode: string;
   message: string | null;
@@ -52,6 +53,7 @@ export function CadastroForm() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [cpf, setCpf] = useState("");
+  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -80,7 +82,7 @@ export function CadastroForm() {
     const response = await fetch("/api/participant/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, cpf, phone, password, confirmPassword, acceptedTerms })
+      body: JSON.stringify({ name, cpf, email, phone, password, confirmPassword, acceptedTerms })
     });
     const data = await response.json();
     setLoading(false);
@@ -94,6 +96,7 @@ export function CadastroForm() {
     setConfirmState({
       name: data.name,
       cpfMasked: data.cpfMasked,
+      email: data.email,
       phone: data.phone,
       registrationCode: data.registrationCode,
       message: data.message ?? null
@@ -139,6 +142,19 @@ export function CadastroForm() {
             placeholder="000.000.000-00"
           />
         </label>
+        <label className="block">
+          <span className="mb-2 block font-bold text-ink">E-mail</span>
+          <input
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            required
+            type="email"
+            autoComplete="email"
+            className="w-full rounded-2xl border border-teal/20 bg-field px-4 py-4 text-lg outline-none ring-teal/30 transition focus:ring-4"
+            placeholder="seuemail@exemplo.com"
+          />
+        </label>
+        <p className="text-sm text-ink/60">{publicCopy.register.emailHint}</p>
         <label className="block">
           <span className="mb-2 block font-bold text-ink">Telefone celular</span>
           <input
@@ -189,7 +205,7 @@ export function CadastroForm() {
               type="button"
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => setShowConfirmPassword((current) => !current)}
-              aria-label={showConfirmPassword ? "Ocultar confirmaÃ§Ã£o de senha" : "Mostrar confirmaÃ§Ã£o de senha"}
+              aria-label={showConfirmPassword ? "Ocultar confirmação de senha" : "Mostrar confirmação de senha"}
               className="absolute inset-y-0 right-0 flex w-14 cursor-pointer items-center justify-center text-ink/50 transition hover:text-ink"
             >
               <EyeIcon crossed={!showConfirmPassword} />
@@ -266,6 +282,9 @@ export function CadastroForm() {
               </p>
               <p>
                 <strong className="text-ink">CPF:</strong> {confirmState?.cpfMasked}
+              </p>
+              <p>
+                <strong className="text-ink">E-mail:</strong> {confirmState?.email}
               </p>
               <p>
                 <strong className="text-ink">Telefone:</strong> {confirmState?.phone}

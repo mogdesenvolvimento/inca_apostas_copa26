@@ -41,11 +41,17 @@ async function main() {
     console.log("Schema antigo de Participant detectado. Participant e Bet foram recriados.");
   }
 
+  if (participantColumns.length > 0 && !participantColumns.includes("email")) {
+    await prisma.$executeRawUnsafe(`ALTER TABLE Participant ADD COLUMN email TEXT;`);
+    console.log("Coluna email adicionada em Participant.");
+  }
+
   await prisma.$executeRawUnsafe(`
     CREATE TABLE IF NOT EXISTS Participant (
       id TEXT NOT NULL PRIMARY KEY,
       name TEXT NOT NULL,
       cpf TEXT NOT NULL UNIQUE,
+      email TEXT,
       phone TEXT NOT NULL,
       passwordHash TEXT NOT NULL,
       registrationCode TEXT NOT NULL UNIQUE,
@@ -55,6 +61,7 @@ async function main() {
     );
   `);
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS Participant_phone_idx ON Participant(phone);`);
+  await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS Participant_email_key ON Participant(email);`);
 
   await prisma.$executeRawUnsafe(`
     CREATE TABLE IF NOT EXISTS Match (

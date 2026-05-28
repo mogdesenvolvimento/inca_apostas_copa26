@@ -12,6 +12,7 @@ import { serializePublicParticipant } from "@/services/participants";
 type Body = {
   name?: string;
   cpf?: string;
+  email?: string;
   phone?: string;
   password?: string;
   confirmPassword?: string;
@@ -24,6 +25,7 @@ export async function POST(request: Request) {
     const participant = await createParticipantAccount(
       body.name ?? "",
       body.cpf ?? "",
+      body.email ?? "",
       body.phone ?? "",
       body.password ?? "",
       body.confirmPassword ?? "",

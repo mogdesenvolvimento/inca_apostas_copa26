@@ -15,13 +15,11 @@ function maskCpf(value: string) {
 
 export function ForgotPasswordForm() {
   const [cpf, setCpf] = useState("");
-  const [email, setEmail] = useState("");
-  const [participantFound, setParticipantFound] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function validateCpf(event: FormEvent) {
+  async function onSubmit(event: FormEvent) {
     event.preventDefault();
     setLoading(true);
     setError("");
@@ -36,31 +34,7 @@ export function ForgotPasswordForm() {
     setLoading(false);
 
     if (!response.ok) {
-      setParticipantFound(false);
-      setError(data.error ?? "Não foi possível validar teu CPF.");
-      return;
-    }
-
-    setParticipantFound(true);
-    setMessage(data.message ?? "");
-  }
-
-  async function sendResetLink(event: FormEvent) {
-    event.preventDefault();
-    setLoading(true);
-    setError("");
-    setMessage("");
-
-    const response = await fetch("/api/participant/password-reset/request", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ cpf, email })
-    });
-    const data = await response.json();
-    setLoading(false);
-
-    if (!response.ok) {
-      setError(data.error ?? "Não foi possível enviar o link.");
+      setError(data.error ?? "Não foi possível iniciar tua recuperação.");
       return;
     }
 
@@ -68,7 +42,7 @@ export function ForgotPasswordForm() {
   }
 
   return (
-    <form onSubmit={participantFound ? sendResetLink : validateCpf} className="mt-6 space-y-4">
+    <form onSubmit={onSubmit} className="mt-6 space-y-4">
       <label className="block">
         <span className="mb-2 block font-bold text-ink">CPF</span>
         <input
@@ -81,34 +55,13 @@ export function ForgotPasswordForm() {
         />
       </label>
 
-      {participantFound ? (
-        <>
-          <label className="block">
-            <span className="mb-2 block font-bold text-ink">{publicCopy.forgotPassword.emailLabel}</span>
-            <input
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              required
-              type="email"
-              className="w-full rounded-2xl border border-teal/20 bg-field px-4 py-4 text-lg outline-none ring-teal/30 transition focus:ring-4"
-              placeholder={publicCopy.forgotPassword.emailPlaceholder}
-            />
-          </label>
-          <p className="text-sm text-ink/60">{publicCopy.forgotPassword.emailHint}</p>
-        </>
-      ) : null}
+      <p className="text-sm text-ink/60">{publicCopy.forgotPassword.emailHint}</p>
 
       {message ? <p className="rounded-2xl bg-teal/10 p-3 text-sm font-medium text-teal">{message}</p> : null}
       {error ? <p className="rounded-2xl bg-wine/10 p-3 text-sm font-bold text-wine">{error}</p> : null}
 
       <PrimaryButton type="submit" disabled={loading} className="w-full">
-        {participantFound
-          ? loading
-            ? publicCopy.forgotPassword.sendSubmitLoading
-            : publicCopy.forgotPassword.sendSubmit
-          : loading
-            ? publicCopy.forgotPassword.cpfSubmitLoading
-            : publicCopy.forgotPassword.cpfSubmit}
+        {loading ? publicCopy.forgotPassword.cpfSubmitLoading : publicCopy.forgotPassword.cpfSubmit}
       </PrimaryButton>
 
       <p className="text-center text-sm text-ink/65">

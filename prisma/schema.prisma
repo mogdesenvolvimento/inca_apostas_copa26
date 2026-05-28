@@ -11,6 +11,7 @@ model Participant {
   id               String   @id @default(cuid())
   name             String
   cpf              String   @unique
+  email            String?  @unique
   phone            String
   passwordHash     String
   registrationCode String   @unique
