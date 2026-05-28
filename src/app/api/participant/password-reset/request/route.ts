@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     const { cpf } = validatePasswordResetRequestInput(body.cpf ?? "");
     const participant = await findParticipantForPasswordReset(cpf);
     const token = createPasswordResetToken(participant.id, participant.email);
-    const origin = new URL(request.url).origin;
+    const origin = resolvePublicOrigin(request);
     const resetUrl = `${origin}/redefinir-senha?token=${encodeURIComponent(token)}`;
 
     await sendPasswordResetEmail({
@@ -30,6 +30,30 @@ export async function POST(request: Request) {
   } catch (error) {
     return jsonError(error instanceof Error ? error.message : "Não foi possível iniciar a redefinição de senha.");
   }
+}
+
+function resolvePublicOrigin(request: Request) {
+  const configuredOrigin =
+    process.env.APP_URL ??
+    process.env.NEXT_PUBLIC_APP_URL ??
+    process.env.RAILWAY_PUBLIC_DOMAIN;
+
+  if (configuredOrigin) {
+    if (configuredOrigin.startsWith("http://") || configuredOrigin.startsWith("https://")) {
+      return configuredOrigin.replace(/\/$/, "");
+    }
+
+    return `https://${configuredOrigin.replace(/\/$/, "")}`;
+  }
+
+  const forwardedHost = request.headers.get("x-forwarded-host");
+  const forwardedProto = request.headers.get("x-forwarded-proto") ?? "https";
+
+  if (forwardedHost) {
+    return `${forwardedProto}://${forwardedHost}`;
+  }
+
+  return new URL(request.url).origin;
 }
 
 function maskEmail(email: string) {
