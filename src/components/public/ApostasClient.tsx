@@ -25,8 +25,6 @@ type MatchItem = {
   } | null;
 };
 
-const AWARDS_MODAL_SESSION_KEY = "inca-awards-modal-seen";
-
 const awardsHighlights = [
   {
     title: "Combo FIL + Inca",
@@ -72,19 +70,9 @@ export function ApostasClient() {
   const [submitting, setSubmitting] = useState(false);
   const [authenticated, setAuthenticated] = useState(true);
   const [showAwardsModal, setShowAwardsModal] = useState(false);
-  const [hasCheckedAwardsModal, setHasCheckedAwardsModal] = useState(false);
 
   useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const hasSeenModal = window.sessionStorage.getItem(AWARDS_MODAL_SESSION_KEY) === "true";
-    if (!hasSeenModal) {
-      setShowAwardsModal(true);
-    }
-
-    setHasCheckedAwardsModal(true);
+    setShowAwardsModal(true);
   }, []);
 
   useEffect(() => {
@@ -138,10 +126,6 @@ export function ApostasClient() {
   }, [router]);
 
   function closeAwardsModal() {
-    if (typeof window !== "undefined") {
-      window.sessionStorage.setItem(AWARDS_MODAL_SESSION_KEY, "true");
-    }
-
     setShowAwardsModal(false);
   }
 
@@ -214,7 +198,7 @@ export function ApostasClient() {
 
   return (
     <>
-      {hasCheckedAwardsModal && showAwardsModal ? (
+      {showAwardsModal ? (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-ink/55 px-4 py-6 backdrop-blur-[2px] transition-opacity duration-300"
           onClick={closeAwardsModal}

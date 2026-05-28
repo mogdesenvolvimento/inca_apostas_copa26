@@ -64,6 +64,7 @@ export function CadastroForm() {
   const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
 
   const isModalOpen = useMemo(() => Boolean(confirmState), [confirmState]);
+  const shouldShowLoginShortcut = error.toLowerCase().includes("já existe cadastro com esse cpf");
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -217,7 +218,16 @@ export function CadastroForm() {
           </span>
         </label>
 
-        {error ? <p className="rounded-2xl bg-wine/10 p-3 text-sm font-bold text-wine">{error}</p> : null}
+        {error ? (
+          <div className="rounded-2xl bg-wine/10 p-3 text-sm text-wine">
+            <p className="font-bold">{error}</p>
+            {shouldShowLoginShortcut ? (
+              <Link href="/login" className="mt-2 inline-flex font-semibold text-teal underline underline-offset-2">
+                Ir para a tela de login
+              </Link>
+            ) : null}
+          </div>
+        ) : null}
         <PrimaryButton type="submit" disabled={loading} className="w-full">
           {loading ? publicCopy.register.submitLoading : publicCopy.register.submit}
         </PrimaryButton>
