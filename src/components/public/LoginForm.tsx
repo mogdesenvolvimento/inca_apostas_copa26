@@ -71,11 +71,14 @@ export function LoginForm() {
       <PrimaryButton type="submit" disabled={loading} className="w-full">
         {loading ? publicCopy.login.submitLoading : publicCopy.login.submit}
       </PrimaryButton>
-      <p className="text-center text-sm text-ink/65">
+      <div className="flex items-center justify-center gap-4 text-sm text-ink/65">
         <Link href="/cadastro" className="font-semibold text-teal underline">
           {publicCopy.login.alternateCta}
         </Link>
-      </p>
+        <Link href="/esqueci-senha" className="font-semibold text-teal underline">
+          {publicCopy.login.forgotPasswordCta}
+        </Link>
+      </div>
     </form>
   );
 }

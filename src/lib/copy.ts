@@ -25,7 +25,32 @@ export const publicCopy = {
     supporting: "Entra de novo pra ver teus palpites e seguir nos jogos abertos.",
     submit: "Acessar meus palpites",
     submitLoading: "Entrando...",
-    alternateCta: "Ainda não tenho cadastro"
+    alternateCta: "Ainda não tenho cadastro",
+    forgotPasswordCta: "Esqueci senha"
+  },
+  forgotPassword: {
+    title: "Recuperar senha",
+    subtitle: "Confirma teu CPF pra receber o link de redefinição.",
+    hint: "Acesso rápido",
+    supporting: "Se teu cadastro estiver ativo, a gente te mostra a opção de envio por e-mail.",
+    cpfSubmit: "Validar CPF",
+    cpfSubmitLoading: "Validando CPF...",
+    emailLabel: "E-mail",
+    emailPlaceholder: "seuemail@exemplo.com",
+    emailHint: "Vamos enviar um link de redefinição para o e-mail preenchido.",
+    sendSubmit: "Enviar link de redefinição",
+    sendSubmitLoading: "Enviando link...",
+    successMessage: "Se o CPF estiver certo, o link de redefinição será enviado para o e-mail informado.",
+    backToLogin: "Voltar para o login"
+  },
+  resetPassword: {
+    title: "Redefinir senha",
+    subtitle: "Escolhe uma senha nova pra voltar aos teus palpites.",
+    hint: "Nova senha",
+    supporting: "Usa uma senha simples de lembrar e confirma abaixo.",
+    submit: "Salvar nova senha",
+    submitLoading: "Salvando nova senha...",
+    successMessage: "Senha atualizada com sucesso. Agora é só fazer teu acesso."
   },
   bets: {
     greetingPrefix: "Olá",

@@ -1,6 +1,10 @@
 import { isValidCpf, normalizeCpf } from "@/lib/cpf";
 import { isValidBrazilPhone, normalizePhone } from "@/lib/phone";
 
+function isValidEmail(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 export function validateParticipantInput(name: string, cpf: string, phone: string) {
   const trimmedName = name.trim();
   const normalizedCpf = normalizeCpf(cpf);
@@ -102,4 +106,57 @@ export function validateScore(score: unknown) {
   }
 
   return value;
+}
+
+export function validatePasswordResetRequestInput(cpf: string, email?: string) {
+  const normalizedCpf = normalizeCpf(cpf);
+  const normalizedEmail = (email ?? "").trim().toLowerCase();
+
+  if (!cpf.trim()) {
+    throw new Error("CPF é obrigatório.");
+  }
+
+  if (!isValidCpf(normalizedCpf)) {
+    throw new Error("Informe um CPF válido.");
+  }
+
+  if (email !== undefined) {
+    if (!normalizedEmail) {
+      throw new Error("Informe teu e-mail para continuar.");
+    }
+
+    if (!isValidEmail(normalizedEmail)) {
+      throw new Error("Informe um e-mail válido.");
+    }
+  }
+
+  return {
+    cpf: normalizedCpf,
+    email: normalizedEmail
+  };
+}
+
+export function validatePasswordResetConfirmInput(password: string, confirmPassword: string) {
+  const normalizedPassword = password.trim();
+  const normalizedConfirmPassword = confirmPassword.trim();
+
+  if (!normalizedPassword) {
+    throw new Error("Senha é obrigatória.");
+  }
+
+  if (normalizedPassword.length < 6) {
+    throw new Error("A senha precisa ter pelo menos 6 caracteres.");
+  }
+
+  if (!normalizedConfirmPassword) {
+    throw new Error("Confirma tua senha pra continuar.");
+  }
+
+  if (normalizedPassword !== normalizedConfirmPassword) {
+    throw new Error("As senhas não conferem.");
+  }
+
+  return {
+    password: normalizedPassword
+  };
 }

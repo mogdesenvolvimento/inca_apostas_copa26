@@ -1,7 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import { hashPassword, verifyPassword } from "@/lib/password";
+import { verifyPasswordResetToken } from "@/lib/password-reset";
 import { generateRegistrationCode } from "@/lib/registration-code";
-import { validateParticipantLoginInput, validateParticipantRegistrationInput } from "@/lib/validation";
+import {
+  validateParticipantLoginInput,
+  validateParticipantRegistrationInput,
+  validatePasswordResetConfirmInput,
+  validatePasswordResetRequestInput
+} from "@/lib/validation";
 
 type ParticipantClient = Pick<typeof prisma, "participant">;
 
@@ -57,6 +63,44 @@ export async function authenticateParticipant(cpf: string, password: string, cli
   }
 
   return participant;
+}
+
+export async function findParticipantForPasswordReset(cpf: string, client: ParticipantClient = prisma) {
+  const data = validatePasswordResetRequestInput(cpf);
+  const participant = await client.participant.findUnique({
+    where: { cpf: data.cpf },
+    select: {
+      id: true,
+      name: true,
+      cpf: true
+    }
+  });
+
+  if (!participant) {
+    throw new Error("Não encontramos cadastro com esse CPF.");
+  }
+
+  return participant;
+}
+
+export async function resetParticipantPassword(token: string, password: string, confirmPassword: string, client: ParticipantClient = prisma) {
+  const tokenPayload = verifyPasswordResetToken(token);
+  const credentials = validatePasswordResetConfirmInput(password, confirmPassword);
+  const participant = await client.participant.findUnique({
+    where: { id: tokenPayload.participantId },
+    select: { id: true }
+  });
+
+  if (!participant) {
+    throw new Error("Não encontramos esse cadastro para redefinir a senha.");
+  }
+
+  const passwordHash = await hashPassword(credentials.password);
+
+  await client.participant.update({
+    where: { id: tokenPayload.participantId },
+    data: { passwordHash }
+  });
 }
 
 async function generateUniqueRegistrationCode(client: ParticipantClient) {
