@@ -9,12 +9,12 @@ const match = {
 };
 
 describe("isMatchAvailableForBet", () => {
-  it("permite aposta no dia do jogo até 30 minutos antes do início", () => {
-    expect(isMatchAvailableForBet(match, new Date("2026-06-11T15:30:00.000Z"))).toBe(true);
+  it("permite aposta no dia do jogo até 10 minutos antes do início", () => {
+    expect(isMatchAvailableForBet(match, new Date("2026-06-11T15:50:00.000Z"))).toBe(true);
   });
 
   it("bloqueia aposta após o cutoff", () => {
-    expect(isMatchAvailableForBet(match, new Date("2026-06-11T15:31:00.000Z"))).toBe(false);
+    expect(isMatchAvailableForBet(match, new Date("2026-06-11T15:51:00.000Z"))).toBe(false);
   });
 
   it("bloqueia aposta fora do dia atual em America/Sao_Paulo", () => {

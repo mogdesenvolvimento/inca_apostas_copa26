@@ -44,7 +44,7 @@ export default function TermosDeUsoPage() {
       <section>
         <h2 className="font-heading text-2xl font-bold text-ink">3. Participação nos palpites</h2>
         <p className="mt-2">Os palpites estarão disponíveis apenas para os jogos liberados no dia.</p>
-        <p className="mt-2">Cada palpite poderá ser enviado somente até 30 minutos antes do início da partida.</p>
+        <p className="mt-2">Cada palpite poderá ser enviado somente até 10 minutos antes do início da partida.</p>
         <p className="mt-2">Após o envio, o palpite não poderá ser alterado.</p>
         <p className="mt-2">Cada participante poderá enviar apenas um palpite por jogo.</p>
       </section>

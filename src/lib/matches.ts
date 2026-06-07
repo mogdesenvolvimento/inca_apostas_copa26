@@ -3,6 +3,8 @@ import { getSaoPauloDateString } from "@/lib/timezone";
 
 export type BetStatus = "available" | "already_bet" | "closed";
 
+const BETTING_CUTOFF_MINUTES = 10;
+
 export function isMatchAvailableForBet(
   match: Pick<Match, "matchDate" | "kickoffAt" | "isActive">,
   now = new Date()
@@ -16,7 +18,7 @@ export function isMatchAvailableForBet(
     return false;
   }
 
-  const cutoff = new Date(match.kickoffAt.getTime() - 30 * 60 * 1000);
+  const cutoff = new Date(match.kickoffAt.getTime() - BETTING_CUTOFF_MINUTES * 60 * 1000);
   return now.getTime() <= cutoff.getTime();
 }
 
