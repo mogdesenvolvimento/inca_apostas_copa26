@@ -26,9 +26,11 @@
   "dependencies": {
     "@prisma/client": "^5.22.0",
     "@types/nodemailer": "^8.0.0",
+    "@types/pdfkit": "^0.17.6",
     "bcryptjs": "^2.4.3",
     "next": "^14.2.16",
     "nodemailer": "^8.0.9",
+    "pdfkit": "^0.19.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "tsx": "^4.19.2"

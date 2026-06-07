@@ -41,7 +41,7 @@ async function main() {
     console.log("Schema antigo de Participant detectado. Participant e Bet foram recriados.");
   }
 
-  if (participantColumns.length > 0 && !participantColumns.includes("email")) {
+  if (!needsParticipantRebuild && participantColumns.length > 0 && !participantColumns.includes("email")) {
     await prisma.$executeRawUnsafe(`ALTER TABLE Participant ADD COLUMN email TEXT;`);
     console.log("Coluna email adicionada em Participant.");
   }

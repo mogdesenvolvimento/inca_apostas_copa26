@@ -21,9 +21,10 @@ export async function createParticipantAccount(
   acceptedTerms: boolean,
   client: ParticipantClient = prisma
 ) {
+  const participantModel = client.participant as any;
   const data = validateParticipantRegistrationInput(name, cpf, email, phone, password, confirmPassword, acceptedTerms);
 
-  const existing = await client.participant.findUnique({
+  const existing = await participantModel.findUnique({
     where: { cpf: data.cpf }
   });
 
@@ -35,7 +36,7 @@ export async function createParticipantAccount(
   const passwordHash = await hashPassword(data.password);
   const acceptedAt = new Date();
 
-  return client.participant.create({
+  return participantModel.create({
     data: {
       name: data.name,
       cpf: data.cpf,
@@ -50,8 +51,9 @@ export async function createParticipantAccount(
 }
 
 export async function authenticateParticipant(cpf: string, password: string, client: ParticipantClient = prisma) {
+  const participantModel = client.participant as any;
   const credentials = validateParticipantLoginInput(cpf, password);
-  const participant = await client.participant.findUnique({
+  const participant = await participantModel.findUnique({
     where: { cpf: credentials.cpf }
   });
 
@@ -68,8 +70,9 @@ export async function authenticateParticipant(cpf: string, password: string, cli
 }
 
 export async function findParticipantForPasswordReset(cpf: string, client: ParticipantClient = prisma) {
+  const participantModel = client.participant as any;
   const data = validatePasswordResetRequestInput(cpf);
-  const participant = await client.participant.findUnique({
+  const participant = await participantModel.findUnique({
     where: { cpf: data.cpf },
     select: {
       id: true,
@@ -99,9 +102,10 @@ export async function resetParticipantPassword(
   confirmPassword: string,
   client: ParticipantClient = prisma
 ) {
+  const participantModel = client.participant as any;
   const tokenPayload = verifyPasswordResetToken(token);
   const credentials = validatePasswordResetConfirmInput(password, confirmPassword);
-  const participant = await client.participant.findUnique({
+  const participant = await participantModel.findUnique({
     where: { id: tokenPayload.participantId },
     select: { id: true, email: true }
   });
@@ -116,16 +120,17 @@ export async function resetParticipantPassword(
 
   const passwordHash = await hashPassword(credentials.password);
 
-  await client.participant.update({
+  await participantModel.update({
     where: { id: tokenPayload.participantId },
     data: { passwordHash }
   });
 }
 
 async function generateUniqueRegistrationCode(client: ParticipantClient) {
+  const participantModel = client.participant as any;
   for (let attempt = 0; attempt < 10; attempt += 1) {
     const code = generateRegistrationCode();
-    const existing = await client.participant.findUnique({
+    const existing = await participantModel.findUnique({
       where: { registrationCode: code }
     });
 

@@ -265,7 +265,20 @@ export function ApostasClient() {
         {message && matches.length ? <StateMessage>{message}</StateMessage> : null}
         {error ? <p className="rounded-2xl bg-wine/10 p-4 text-sm font-bold text-wine">{error}</p> : null}
 
-        {!matches.length ? <StateMessage>{message || publicCopy.bets.noTodayMatches}</StateMessage> : null}
+        {!matches.length ? (
+          <div className="rounded-3xl border border-teal/20 bg-white/80 p-5 text-sm leading-relaxed text-ink shadow-card backdrop-blur">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <p>{message || publicCopy.bets.noTodayMatches}</p>
+              <Link
+                href="/api/calendar"
+                target="_blank"
+                className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-gradient-to-r from-wine via-clay to-amber px-5 py-3 text-center text-sm font-bold text-white shadow-card transition hover:brightness-110 md:shrink-0"
+              >
+                Veja o Calendário completo da Copa
+              </Link>
+            </div>
+          </div>
+        ) : null}
         {matches.length && !availableCount ? <StateMessage>{stateMessages.allDone}</StateMessage> : null}
 
         <form onSubmit={onSubmit} className="space-y-4">
