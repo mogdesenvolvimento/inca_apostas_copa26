@@ -30,7 +30,7 @@ export async function GET() {
 
   const pdf = await buildCalendarPdf(matches);
 
-  return new NextResponse(pdf, {
+  return new NextResponse(new Uint8Array(pdf), {
     headers: {
       "Content-Type": "application/pdf",
       "Content-Disposition": 'inline; filename="calendario-completo-copa-inca.pdf"',
