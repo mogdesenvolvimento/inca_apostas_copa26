@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { attachMatchResults } from "@/lib/admin-results-db";
+import { buildParticipantRanking, getWinnersForMatch, hasOfficialResult } from "@/lib/admin-results";
 import { normalizeCpf } from "@/lib/cpf";
 import { getCurrentAdmin } from "@/lib/auth";
 import { jsonError } from "@/lib/http";
@@ -48,23 +50,107 @@ export async function GET(request: Request) {
   });
 
   if (exportCsv) {
-    const header = "codigo,nome,cpf,telefone,grupo,confronto,placar,data_envio";
-    const rows = bets.map((bet) =>
-      [
-        bet.participant.registrationCode,
-        bet.participant.name,
-        bet.participant.cpf,
-        bet.participant.phone,
-        bet.match.groupName,
-        `${bet.match.homeTeam} x ${bet.match.awayTeam}`,
-        `${bet.homeScoreGuess} x ${bet.awayScoreGuess}`,
-        bet.submittedAt.toISOString()
-      ]
-        .map(csvCell)
-        .join(",")
-    );
+    const [filteredMatchesBase, allMatchesBase] = await Promise.all([
+      prisma.match.findMany({
+        where: {
+          id: matchId,
+          matchDate: date,
+          groupName: group
+        },
+        include: {
+          bets: {
+            include: { participant: true },
+            orderBy: { submittedAt: "desc" }
+          }
+        },
+        orderBy: [{ matchDate: "asc" }, { kickoffAt: "asc" }]
+      }),
+      prisma.match.findMany({
+        include: {
+          bets: {
+            include: { participant: true }
+          }
+        },
+        orderBy: [{ matchDate: "asc" }, { kickoffAt: "asc" }]
+      })
+    ]);
+    const [filteredMatches, allMatches] = await Promise.all([
+      attachMatchResults(filteredMatchesBase),
+      attachMatchResults(allMatchesBase)
+    ]);
+    const matchesWithResults = allMatches.filter((match) => hasOfficialResult(match));
+    const ranking = buildParticipantRanking(matchesWithResults);
 
-    return new NextResponse([header, ...rows].join("\n"), {
+    const sections = [
+      buildCsvSection(
+        "apostas",
+        "codigo,nome,cpf,telefone,grupo,confronto,placar,data_envio",
+        bets.map((bet) =>
+          [
+            bet.participant.registrationCode,
+            bet.participant.name,
+            bet.participant.cpf,
+            bet.participant.phone,
+            bet.match.groupName,
+            `${bet.match.homeTeam} x ${bet.match.awayTeam}`,
+            `${bet.homeScoreGuess} x ${bet.awayScoreGuess}`,
+            bet.submittedAt.toISOString()
+          ]
+            .map(csvCell)
+            .join(",")
+        )
+      ),
+      buildCsvSection(
+        "resultados_oficiais",
+        "grupo,data,hora,confronto,resultado_oficial",
+        filteredMatches
+          .filter((match: any) => hasOfficialResult(match))
+          .map((match: any) =>
+            [
+              match.groupName,
+              match.matchDate,
+              match.matchTime,
+              `${match.homeTeam} x ${match.awayTeam}`,
+              `${match.officialScoreHome} x ${match.officialScoreAway}`
+            ]
+              .map(csvCell)
+              .join(",")
+          )
+      ),
+      buildCsvSection(
+        "acertadores_por_jogo",
+        "grupo,data,hora,confronto,codigo,nome,cpf,telefone,placar_enviado,horario_envio",
+        filteredMatches.flatMap((match: any) =>
+          getWinnersForMatch(match).map((winner) =>
+            [
+              match.groupName,
+              match.matchDate,
+              match.matchTime,
+              `${match.homeTeam} x ${match.awayTeam}`,
+              winner.registrationCode,
+              winner.name,
+              winner.cpf,
+              winner.phone,
+              `${winner.homeScoreGuess} x ${winner.awayScoreGuess}`,
+              winner.submittedAt.toISOString()
+            ]
+              .map(csvCell)
+              .join(",")
+          )
+        )
+      ),
+      buildCsvSection(
+        "ranking_geral_de_acertos",
+        "posicao,nome,cpf,telefone,codigo,total_acertos",
+        ranking.map((item) =>
+          [item.position, item.name, item.cpf, item.phone, item.registrationCode, item.correctCount]
+            .map((value) => csvCell(String(value)))
+            .join(",")
+        )
+      )
+    ].filter(Boolean);
+
+    return new NextResponse(sections.join("\n\n"), {
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
         "Content-Disposition": "attachment; filename=apostas.csv"
@@ -77,4 +163,8 @@ export async function GET(request: Request) {
 
 function csvCell(value: string) {
   return `"${value.replace(/"/g, '""')}"`;
+}
+
+function buildCsvSection(title: string, header: string, rows: string[]) {
+  return [`# ${title}`, header, ...rows].join("\n");
 }

@@ -59,6 +59,14 @@ function getStatusPresentation(status: MatchStatus) {
   };
 }
 
+function groupMatchesByDate(matches: MatchItem[]) {
+  return matches.reduce<Record<string, MatchItem[]>>((accumulator, match) => {
+    accumulator[match.matchDate] ??= [];
+    accumulator[match.matchDate].push(match);
+    return accumulator;
+  }, {});
+}
+
 export function ApostasClient() {
   const router = useRouter();
   const [participantName, setParticipantName] = useState("");
@@ -110,13 +118,14 @@ export function ApostasClient() {
 
         const data = await matchesResponse.json();
         setMatches(data.matches ?? []);
+
         if (!data.matches?.length) {
           setMessage(data.message ?? publicCopy.bets.noTodayMatches);
-        } else if (data.message) {
-          setMessage(data.message);
+        } else {
+          setMessage(data.message ?? "");
         }
       } catch {
-        setError("Não deu pra carregar os jogos do dia. Tenta de novo.");
+        setError("Não deu pra carregar os jogos do período. Tenta de novo.");
       } finally {
         setLoading(false);
       }
@@ -124,6 +133,9 @@ export function ApostasClient() {
 
     void loadData();
   }, [router]);
+
+  const availableCount = matches.filter((match) => match.status === "available").length;
+  const allTodayAlreadyBet = matches.length > 0 && matches.every((match) => match.status === "already_bet");
 
   function closeAwardsModal() {
     setShowAwardsModal(false);
@@ -194,8 +206,6 @@ export function ApostasClient() {
     );
   }
 
-  const availableCount = matches.filter((match) => match.status === "available").length;
-
   return (
     <>
       {showAwardsModal ? (
@@ -262,7 +272,7 @@ export function ApostasClient() {
           <ParticipantLogoutButton className="mt-4 sm:hidden" />
         </div>
 
-        {message && matches.length ? <StateMessage>{message}</StateMessage> : null}
+        {message ? <StateMessage>{message}</StateMessage> : null}
         {error ? <p className="rounded-2xl bg-wine/10 p-4 text-sm font-bold text-wine">{error}</p> : null}
 
         {!matches.length ? (
@@ -279,7 +289,8 @@ export function ApostasClient() {
             </div>
           </div>
         ) : null}
-        {matches.length && !availableCount ? <StateMessage>{stateMessages.allDone}</StateMessage> : null}
+
+        {allTodayAlreadyBet ? <StateMessage>{stateMessages.allDone}</StateMessage> : null}
 
         <form onSubmit={onSubmit} className="space-y-4">
           {matches.map((match) => {
@@ -287,7 +298,10 @@ export function ApostasClient() {
             const disabled = statusPresentation.disabled;
 
             return (
-              <article key={match.id} className="overflow-hidden rounded-[1.75rem] border border-white/70 bg-white/90 p-5 shadow-card">
+              <article
+                key={match.id}
+                className="overflow-hidden rounded-[1.75rem] border border-white/70 bg-white/90 p-5 shadow-card"
+              >
                 <div className="mb-4 h-1.5 w-24 rounded-full bg-gradient-to-r from-wine via-amber to-teal" />
                 <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
                   <span className="rounded-full bg-teal/12 px-3 py-1 font-bold text-teal">{match.groupName}</span>
@@ -305,7 +319,10 @@ export function ApostasClient() {
                     disabled={disabled}
                     value={disabled ? match.existingBet?.homeScoreGuess ?? "" : scores[match.id]?.home ?? ""}
                     onChange={(event) =>
-                      setScores((current) => ({ ...current, [match.id]: { ...current[match.id], home: event.target.value } }))
+                      setScores((current) => ({
+                        ...current,
+                        [match.id]: { ...current[match.id], home: event.target.value }
+                      }))
                     }
                     min={0}
                     max={99}
@@ -319,7 +336,10 @@ export function ApostasClient() {
                     disabled={disabled}
                     value={disabled ? match.existingBet?.awayScoreGuess ?? "" : scores[match.id]?.away ?? ""}
                     onChange={(event) =>
-                      setScores((current) => ({ ...current, [match.id]: { ...current[match.id], away: event.target.value } }))
+                      setScores((current) => ({
+                        ...current,
+                        [match.id]: { ...current[match.id], away: event.target.value }
+                      }))
                     }
                     min={0}
                     max={99}

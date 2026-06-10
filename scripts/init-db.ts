@@ -72,10 +72,27 @@ async function main() {
       kickoffAt DATETIME NOT NULL,
       homeTeam TEXT NOT NULL,
       awayTeam TEXT NOT NULL,
+      officialScoreHome INTEGER,
+      officialScoreAway INTEGER,
+      resultRegisteredAt DATETIME,
+      resultUpdatedAt DATETIME,
       isActive BOOLEAN NOT NULL DEFAULT 1,
       createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
   `);
+  const matchColumns = (await prisma.$queryRawUnsafe<Array<{ name: string }>>(`PRAGMA table_info('Match');`)).map((column) => column.name);
+  if (!matchColumns.includes("officialScoreHome")) {
+    await prisma.$executeRawUnsafe(`ALTER TABLE Match ADD COLUMN officialScoreHome INTEGER;`);
+  }
+  if (!matchColumns.includes("officialScoreAway")) {
+    await prisma.$executeRawUnsafe(`ALTER TABLE Match ADD COLUMN officialScoreAway INTEGER;`);
+  }
+  if (!matchColumns.includes("resultRegisteredAt")) {
+    await prisma.$executeRawUnsafe(`ALTER TABLE Match ADD COLUMN resultRegisteredAt DATETIME;`);
+  }
+  if (!matchColumns.includes("resultUpdatedAt")) {
+    await prisma.$executeRawUnsafe(`ALTER TABLE Match ADD COLUMN resultUpdatedAt DATETIME;`);
+  }
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS Match_matchDate_idx ON Match(matchDate);`);
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS Match_groupName_idx ON Match(groupName);`);
 

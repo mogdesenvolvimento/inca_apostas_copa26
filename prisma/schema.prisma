@@ -24,16 +24,20 @@ model Participant {
 }
 
 model Match {
-  id        String   @id @default(cuid())
-  groupName String
-  matchDate String
-  matchTime String
-  kickoffAt DateTime
-  homeTeam  String
-  awayTeam  String
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  bets      Bet[]
+  id               String    @id @default(cuid())
+  groupName        String
+  matchDate        String
+  matchTime        String
+  kickoffAt        DateTime
+  homeTeam         String
+  awayTeam         String
+  officialScoreHome Int?
+  officialScoreAway Int?
+  resultRegisteredAt DateTime?
+  resultUpdatedAt  DateTime?
+  isActive         Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  bets             Bet[]
 
   @@index([matchDate])
   @@index([groupName])
