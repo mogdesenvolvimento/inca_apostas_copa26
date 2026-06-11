@@ -149,7 +149,7 @@ export function ApostasClient() {
       );
 
     if (!bets.length) {
-      setError(stateMessages.allDone);
+      setError("Preenche ao menos um placar para enviar teu palpite.");
       return;
     }
 
