@@ -205,23 +205,32 @@ export function ApostasClient() {
             role="dialog"
             aria-modal="true"
             aria-label="Premiações da semana"
-            className="w-full max-w-4xl rounded-[2rem] border border-white/70 bg-white/95 p-3 shadow-card sm:p-4"
+            className="max-h-[92vh] w-[92vw] max-w-3xl overflow-y-auto rounded-[2rem] border border-white/70 bg-white/95 p-4 shadow-card sm:p-6"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="overflow-hidden rounded-[1.5rem]">
+            <div className="px-2 text-center sm:px-4">
+              <h2 className="font-heading text-3xl font-bold text-ink sm:text-4xl">Quem acerta mais, ganha!</h2>
+              <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-ink/72 sm:text-base">
+                Faça seus palpites e concorra aos prêmios da fase.
+              </p>
+            </div>
+
+            <div className="mx-auto mt-5 w-full max-w-[520px] overflow-hidden rounded-[1.5rem]">
               <Image
                 src="/assets/awards-modal-2026-06-10.jpeg"
                 alt="Premiações da fase de grupos da Copa Inca"
                 width={1080}
                 height={1440}
                 priority
-                className="h-auto w-full"
+                className="mx-auto block h-auto w-full max-w-[520px]"
               />
             </div>
 
-            <PrimaryButton type="button" onClick={closeAwardsModal} className="mx-auto mt-4 min-w-[180px]">
+            <div className="mt-5 flex justify-center">
+              <PrimaryButton type="button" onClick={closeAwardsModal} className="min-w-[180px]">
               Fechar
-            </PrimaryButton>
+              </PrimaryButton>
+            </div>
           </div>
         </div>
       ) : null}
