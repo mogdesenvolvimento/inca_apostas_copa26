@@ -61,23 +61,35 @@ export default async function AdminBetsPage({ searchParams }: Props) {
   query.set("export", "csv");
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen overflow-x-hidden">
       <AdminNav adminName={admin.name} />
-      <main className="mx-auto max-w-7xl px-4 py-6">
-        <section className="space-y-6">
+      <main className="mx-auto w-full max-w-7xl px-4 py-6 box-border">
+        <section className="min-w-0 space-y-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div>
+            <div className="min-w-0">
               <h1 className="font-beyno text-4xl text-ink">{adminCopy.bets.title}</h1>
               <p className="text-ink/65">{adminCopy.bets.subtitle}</p>
             </div>
-            <a href={`/api/admin/bets?${query.toString()}`} className="rounded-2xl bg-leaf px-4 py-3 text-center font-bold text-white">
+            <a
+              href={`/api/admin/bets?${query.toString()}`}
+              className="w-full rounded-2xl bg-leaf px-4 py-3 text-center font-bold text-white sm:w-auto"
+            >
               {adminCopy.bets.export}
             </a>
           </div>
 
-          <form className="grid gap-3 rounded-[1.75rem] bg-white/85 p-5 shadow-card md:grid-cols-5">
-            <input name="date" type="date" defaultValue={date} className="rounded-2xl border border-ink/10 bg-field px-3 py-3" />
-            <select name="group" defaultValue={group ?? ""} className="rounded-2xl border border-ink/10 bg-field px-3 py-3">
+          <form className="grid min-w-0 gap-3 rounded-[1.75rem] bg-white/85 p-4 shadow-card sm:p-5 md:grid-cols-5">
+            <input
+              name="date"
+              type="date"
+              defaultValue={date}
+              className="min-w-0 w-full rounded-2xl border border-ink/10 bg-field px-3 py-3 box-border"
+            />
+            <select
+              name="group"
+              defaultValue={group ?? ""}
+              className="min-w-0 w-full rounded-2xl border border-ink/10 bg-field px-3 py-3 box-border"
+            >
               <option value="">{adminCopy.bets.filters.allGroups}</option>
               {groups.map((item) => (
                 <option key={item.groupName} value={item.groupName}>
@@ -85,7 +97,11 @@ export default async function AdminBetsPage({ searchParams }: Props) {
                 </option>
               ))}
             </select>
-            <select name="matchId" defaultValue={matchId ?? ""} className="rounded-2xl border border-ink/10 bg-field px-3 py-3 md:col-span-2">
+            <select
+              name="matchId"
+              defaultValue={matchId ?? ""}
+              className="min-w-0 w-full rounded-2xl border border-ink/10 bg-field px-3 py-3 box-border md:col-span-2"
+            >
               <option value="">{adminCopy.bets.filters.allMatches}</option>
               {matches.map((match) => (
                 <option key={match.id} value={match.id}>
@@ -97,14 +113,14 @@ export default async function AdminBetsPage({ searchParams }: Props) {
               name="search"
               defaultValue={search}
               placeholder={adminCopy.bets.filters.searchPlaceholder}
-              className="rounded-2xl border border-ink/10 bg-field px-3 py-3"
+              className="min-w-0 w-full rounded-2xl border border-ink/10 bg-field px-3 py-3 box-border"
             />
-            <button className="rounded-2xl bg-ink px-4 py-3 font-bold text-white md:col-span-5">
+            <button className="w-full rounded-2xl bg-ink px-4 py-3 font-bold text-white md:col-span-5">
               {adminCopy.bets.filters.submit}
             </button>
           </form>
 
-          <div className="overflow-hidden rounded-[1.75rem] bg-white/85 shadow-card">
+          <div className="min-w-0 overflow-hidden rounded-[1.75rem] bg-white/85 shadow-card">
             <div className="hidden grid-cols-[1fr_1.2fr_1fr_1fr_1.4fr_0.8fr_1fr] gap-3 border-b border-ink/10 p-4 text-sm font-bold text-leaf lg:grid">
               <span>{adminCopy.bets.table.code}</span>
               <span>{adminCopy.bets.table.name}</span>
@@ -116,18 +132,61 @@ export default async function AdminBetsPage({ searchParams }: Props) {
             </div>
             {bets.length ? (
               bets.map((bet) => (
-                <div key={bet.id} className="grid gap-2 border-b border-ink/10 p-4 text-sm last:border-b-0 lg:grid-cols-[1fr_1.2fr_1fr_1fr_1.4fr_0.8fr_1fr] lg:gap-3">
-                  <span className="font-bold text-leaf">{bet.participant.registrationCode}</span>
-                  <strong>{bet.participant.name}</strong>
-                  <span>{formatCpf(bet.participant.cpf)}</span>
-                  <span>{formatPhoneBR(bet.participant.phone)}</span>
-                  <Link className="font-bold text-leaf underline" href={`/admin/jogos/${encodeURIComponent(bet.match.id)}`}>
-                    {bet.match.homeTeam} x {bet.match.awayTeam}
-                  </Link>
-                  <span className="font-bold">
-                    {bet.homeScoreGuess} x {bet.awayScoreGuess}
-                  </span>
-                  <span>{formatDateTimeBR(bet.submittedAt)}</span>
+                <div
+                  key={bet.id}
+                  className="grid min-w-0 gap-3 border-b border-ink/10 p-4 text-sm last:border-b-0 lg:grid-cols-[1fr_1.2fr_1fr_1fr_1.4fr_0.8fr_1fr] lg:gap-3"
+                >
+                  <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:contents">
+                    <div className="min-w-0 lg:contents">
+                      <span className="mb-1 block text-[11px] font-bold uppercase tracking-[0.08em] text-ink/45 lg:hidden">
+                        {adminCopy.bets.table.code}
+                      </span>
+                      <span className="block truncate font-bold text-leaf lg:whitespace-normal">{bet.participant.registrationCode}</span>
+                    </div>
+                    <div className="min-w-0 lg:contents">
+                      <span className="mb-1 block text-[11px] font-bold uppercase tracking-[0.08em] text-ink/45 lg:hidden">
+                        {adminCopy.bets.table.name}
+                      </span>
+                      <strong className="block break-words">{bet.participant.name}</strong>
+                    </div>
+                    <div className="min-w-0 lg:contents">
+                      <span className="mb-1 block text-[11px] font-bold uppercase tracking-[0.08em] text-ink/45 lg:hidden">
+                        {adminCopy.bets.table.cpf}
+                      </span>
+                      <span className="block break-words">{formatCpf(bet.participant.cpf)}</span>
+                    </div>
+                    <div className="min-w-0 lg:contents">
+                      <span className="mb-1 block text-[11px] font-bold uppercase tracking-[0.08em] text-ink/45 lg:hidden">
+                        {adminCopy.bets.table.phone}
+                      </span>
+                      <span className="block break-words">{formatPhoneBR(bet.participant.phone)}</span>
+                    </div>
+                    <div className="min-w-0 lg:contents">
+                      <span className="mb-1 block text-[11px] font-bold uppercase tracking-[0.08em] text-ink/45 lg:hidden">
+                        {adminCopy.bets.table.matchup}
+                      </span>
+                      <Link
+                        className="block break-words font-bold text-leaf underline"
+                        href={`/admin/jogos/${encodeURIComponent(bet.match.id)}`}
+                      >
+                        {bet.match.homeTeam} x {bet.match.awayTeam}
+                      </Link>
+                    </div>
+                    <div className="min-w-0 lg:contents">
+                      <span className="mb-1 block text-[11px] font-bold uppercase tracking-[0.08em] text-ink/45 lg:hidden">
+                        {adminCopy.bets.table.score}
+                      </span>
+                      <span className="block font-bold">
+                        {bet.homeScoreGuess} x {bet.awayScoreGuess}
+                      </span>
+                    </div>
+                    <div className="min-w-0 sm:col-span-2 lg:contents">
+                      <span className="mb-1 block text-[11px] font-bold uppercase tracking-[0.08em] text-ink/45 lg:hidden">
+                        {adminCopy.bets.table.sentAt}
+                      </span>
+                      <span className="block break-words">{formatDateTimeBR(bet.submittedAt)}</span>
+                    </div>
+                  </div>
                 </div>
               ))
             ) : (

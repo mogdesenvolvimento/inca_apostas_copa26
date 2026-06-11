@@ -21,7 +21,8 @@
     "prisma:seed": "prisma db seed",
     "seed": "tsx prisma/seed.ts",
     "db:init": "tsx scripts/init-db.ts",
-    "db:clear-participants": "tsx scripts/clear-participants.ts"
+    "db:clear-participants": "tsx scripts/clear-participants.ts",
+    "db:cleanup-test-matches": "tsx scripts/cleanup-test-matches.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
