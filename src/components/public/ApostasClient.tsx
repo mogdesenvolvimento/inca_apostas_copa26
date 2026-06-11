@@ -247,6 +247,14 @@ export function ApostasClient() {
               <p className="mt-2 max-w-2xl text-[0.92rem] font-medium leading-relaxed text-[#b35b5b]">
                 Apostas nos placares ficam liberadas até 10 minutos antes do início de cada jogo.
               </p>
+              <a
+                href="https://www.fifa.com/pt/tournaments/mens/worldcup/canadamexicousa2026/articles/copa-mundo-2026-tabela-jogos"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-2xl border border-teal/18 bg-white/82 px-6 py-3 text-center text-sm font-bold text-teal shadow-card transition hover:bg-teal/5 sm:w-auto"
+              >
+                Veja tabela oficial da Fifa
+              </a>
             </div>
             <div className="flex flex-col items-end gap-3">
               <ParticipantLogoutButton className="hidden sm:inline-flex" />
