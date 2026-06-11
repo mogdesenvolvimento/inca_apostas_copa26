@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -24,19 +25,6 @@ type MatchItem = {
     awayScoreGuess: number;
   } | null;
 };
-
-const awardsHighlights = [
-  {
-    title: "Combo FIL + Inca",
-    description: "Na compra de uma cerveja FIL, você ganha uma Helles Inca.",
-    note: "Consulte regras e disponibilidade diretamente no balcão."
-  },
-  {
-    title: "Promo Trinca",
-    description: "Na compra de uma trinca, ganhe 1 pint de cerveja FIL.",
-    note: "Confirme a premiação no balcão antes do pedido."
-  }
-] as const;
 
 function formatDate(date: string) {
   const [year, month, day] = date.split("-");
@@ -216,35 +204,22 @@ export function ApostasClient() {
           <div
             role="dialog"
             aria-modal="true"
-            aria-labelledby="awards-modal-title"
-            className="w-full max-w-xl rounded-[2rem] border border-white/70 bg-white/95 p-6 text-center shadow-card sm:p-8"
+            aria-label="Premiações da semana"
+            className="w-full max-w-4xl rounded-[2rem] border border-white/70 bg-white/95 p-3 shadow-card sm:p-4"
             onClick={(event) => event.stopPropagation()}
           >
-            <h2 id="awards-modal-title" className="font-heading text-3xl font-bold text-ink sm:text-4xl">
-              Premiações da Semana
-            </h2>
-            <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-ink/72 sm:text-base">
-              Confira os brindes disponíveis para os palpites dos jogos desta semana.
-            </p>
-
-            <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              {awardsHighlights.map((award) => (
-                <article
-                  key={award.title}
-                  className="rounded-[1.6rem] border border-teal/14 bg-field/80 p-5 text-left shadow-sm"
-                >
-                  <h3 className="font-heading text-2xl font-bold text-ink">{award.title}</h3>
-                  <p className="mt-3 text-sm leading-relaxed text-ink/80 sm:text-base">{award.description}</p>
-                  <p className="mt-4 text-xs leading-relaxed text-ink/56">{award.note}</p>
-                </article>
-              ))}
+            <div className="overflow-hidden rounded-[1.5rem]">
+              <Image
+                src="/assets/awards-modal-2026-06-10.jpeg"
+                alt="Premiações da fase de grupos da Copa Inca"
+                width={1080}
+                height={1440}
+                priority
+                className="h-auto w-full"
+              />
             </div>
 
-            <div className="mt-5 rounded-[1.4rem] border border-teal/12 bg-white/75 px-4 py-3 text-sm leading-relaxed text-ink/64">
-              As premiações podem variar conforme disponibilidade da semana.
-            </div>
-
-            <PrimaryButton type="button" onClick={closeAwardsModal} className="mx-auto mt-6 min-w-[180px]">
+            <PrimaryButton type="button" onClick={closeAwardsModal} className="mx-auto mt-4 min-w-[180px]">
               Fechar
             </PrimaryButton>
           </div>

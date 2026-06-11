@@ -12,7 +12,15 @@ type MatchResultRow = {
   resultUpdatedAt: string | Date | null;
 };
 
-export async function attachMatchResults<T extends MatchWithId>(matches: T[]): Promise<Array<T & MatchResultRow>> {
+type MatchResultRecord = {
+  id: string;
+  officialScoreHome: number | null;
+  officialScoreAway: number | null;
+  resultRegisteredAt: Date | null;
+  resultUpdatedAt: Date | null;
+};
+
+export async function attachMatchResults<T extends MatchWithId>(matches: T[]): Promise<Array<T & MatchResultRecord>> {
   if (!matches.length) {
     return [];
   }
@@ -41,16 +49,17 @@ export async function attachMatchResults<T extends MatchWithId>(matches: T[]): P
 
 export async function getMatchResultById(matchId: string) {
   const [row] = await loadMatchResultRows([matchId]);
+  if (row) {
+    return normalizeMatchResult(row);
+  }
 
-  return (
-    row ?? {
-      id: matchId,
-      officialScoreHome: null,
-      officialScoreAway: null,
-      resultRegisteredAt: null,
-      resultUpdatedAt: null
-    }
-  );
+  return {
+    id: matchId,
+    officialScoreHome: null,
+    officialScoreAway: null,
+    resultRegisteredAt: null,
+    resultUpdatedAt: null
+  };
 }
 
 export async function saveOfficialResult(params: {
@@ -107,4 +116,14 @@ function toNumberOrNull(value: number | string | null) {
   }
 
   return typeof value === "number" ? value : Number(value);
+}
+
+function normalizeMatchResult(row: MatchResultRow): MatchResultRecord {
+  return {
+    id: row.id,
+    officialScoreHome: row.officialScoreHome,
+    officialScoreAway: row.officialScoreAway,
+    resultRegisteredAt: toDateOrNull(row.resultRegisteredAt),
+    resultUpdatedAt: toDateOrNull(row.resultUpdatedAt)
+  };
 }
