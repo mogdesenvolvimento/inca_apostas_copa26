@@ -253,7 +253,7 @@ export function ApostasClient() {
                 rel="noopener noreferrer"
                 className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-2xl border border-teal/18 bg-white/82 px-6 py-3 text-center text-sm font-bold text-teal shadow-card transition hover:bg-teal/5 sm:w-auto"
               >
-                Veja tabela oficial da Fifa
+                Veja tabela oficial da FIFA
               </a>
             </div>
             <div className="flex flex-col items-end gap-3">
