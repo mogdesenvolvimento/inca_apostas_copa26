@@ -17,12 +17,12 @@ export function PublicFooterLinks() {
         oficial com FIFA, CBF ou qualquer entidade organizadora de competições esportivas.
       </p>
       <div className="rounded-[1.5rem] border border-white/60 bg-white/70 px-4 py-3 shadow-card backdrop-blur">
-        <div className="flex flex-col items-center justify-between gap-3 text-center sm:flex-row sm:text-left">
-          <p className="text-xs leading-relaxed text-ink/70 sm:text-sm">
+        <div className="flex flex-col items-center justify-between gap-4 text-center sm:flex-row sm:items-center sm:text-left">
+          <p className="text-[11px] leading-relaxed text-ink/70 sm:flex-1 sm:text-xs">
             © 2026 Inca Bar de Cervejas. Todos os direitos reservados.
           </p>
-          <div className="flex max-w-full flex-col items-center justify-center gap-2 text-center sm:flex-row sm:items-center sm:justify-end sm:gap-3 sm:text-right">
-            <span className="text-xs leading-relaxed text-ink/70 sm:text-sm">Desenvolvido por</span>
+          <div className="flex max-w-full flex-col items-center justify-center gap-2 text-center sm:flex-[0_0_auto] sm:flex-row sm:items-center sm:justify-end sm:gap-2 sm:text-right">
+            <span className="text-[11px] leading-relaxed text-ink/68 sm:text-xs">Desenvolvido por</span>
             <a
               href="https://www.mogsistemasdigitais.com.br/"
               target="_blank"
@@ -33,10 +33,10 @@ export function PublicFooterLinks() {
               <Image
                 src="/assets/mog-logo.png"
                 alt="Logo da MOG Sistemas Digitais"
-                width={120}
-                height={44}
-                sizes="(max-width: 640px) 140px, 180px"
-                className="h-[38px] w-auto max-w-full object-contain sm:h-[44px]"
+                width={180}
+                height={56}
+                sizes="(max-width: 640px) 160px, 220px"
+                className="h-[42px] w-auto max-w-full object-contain sm:h-[48px] lg:h-[52px]"
               />
             </a>
           </div>
