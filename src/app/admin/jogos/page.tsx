@@ -6,20 +6,43 @@ import { attachMatchResults } from "@/lib/admin-results-db";
 import { prisma } from "@/lib/prisma";
 import { formatDateBR } from "@/lib/timezone";
 
-export default async function AdminMatchesPage() {
+type Props = {
+  searchParams?: {
+    date?: string;
+    group?: string;
+  };
+};
+
+export default async function AdminMatchesPage({ searchParams }: Props) {
   const admin = await getCurrentAdmin();
   if (!admin) redirect("/admin/login");
 
-  const matchesBase = await prisma.match.findMany({
-    include: {
-      _count: {
-        select: {
-          bets: true
+  const date = searchParams?.date || undefined;
+  const group = searchParams?.group || undefined;
+
+  const where = {
+    ...(date ? { matchDate: date } : {}),
+    ...(group ? { groupName: group } : {})
+  };
+
+  const [matchesBase, groups] = await Promise.all([
+    prisma.match.findMany({
+      where,
+      include: {
+        _count: {
+          select: {
+            bets: true
+          }
         }
-      }
-    },
-    orderBy: [{ matchDate: "asc" }, { kickoffAt: "asc" }]
-  });
+      },
+      orderBy: [{ matchDate: "asc" }, { kickoffAt: "asc" }]
+    }),
+    prisma.match.findMany({
+      distinct: ["groupName"],
+      orderBy: { groupName: "asc" },
+      select: { groupName: true }
+    })
+  ]);
 
   const matches = await attachMatchResults(matchesBase);
 
@@ -43,6 +66,30 @@ export default async function AdminMatchesPage() {
                 <p className="text-sm text-ink/60">{matches.length} jogo(s) encontrado(s).</p>
               </div>
             </div>
+
+            <form className="mb-5 grid gap-3 rounded-[1.5rem] bg-page/65 p-4 md:grid-cols-[1fr_1fr_auto]">
+              <input
+                name="date"
+                type="date"
+                defaultValue={date}
+                className="min-w-0 w-full rounded-2xl border border-ink/10 bg-white px-3 py-3"
+              />
+              <select
+                name="group"
+                defaultValue={group ?? ""}
+                className="min-w-0 w-full rounded-2xl border border-ink/10 bg-white px-3 py-3"
+              >
+                <option value="">Todos os grupos</option>
+                {groups.map((item) => (
+                  <option key={item.groupName} value={item.groupName}>
+                    {item.groupName}
+                  </option>
+                ))}
+              </select>
+              <button className="w-full rounded-2xl bg-ink px-5 py-3 text-sm font-bold text-white transition hover:bg-clay md:w-auto">
+                Filtrar
+              </button>
+            </form>
 
             <div className="space-y-3">
               {matches.length ? (
@@ -96,7 +143,7 @@ export default async function AdminMatchesPage() {
                 })
               ) : (
                 <p className="rounded-[1.5rem] border border-dashed border-ink/15 bg-page/60 px-4 py-6 text-sm text-ink/65">
-                  Nenhum jogo cadastrado no momento.
+                  Nenhum jogo encontrado com os filtros atuais.
                 </p>
               )}
             </div>
