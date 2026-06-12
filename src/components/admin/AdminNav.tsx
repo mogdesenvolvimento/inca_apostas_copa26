@@ -23,6 +23,9 @@ export function AdminNav({ adminName }: { adminName: string }) {
           <Link className="rounded-full bg-ink/5 px-4 py-2 hover:bg-gold/30" href="/admin/dashboard">
             Dashboard
           </Link>
+          <Link className="rounded-full bg-ink/5 px-4 py-2 hover:bg-gold/30" href="/admin/jogos">
+            Jogos
+          </Link>
           <Link className="rounded-full bg-ink/5 px-4 py-2 hover:bg-gold/30" href="/admin/apostas">
             Apostas
           </Link>
