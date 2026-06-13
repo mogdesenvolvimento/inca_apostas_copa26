@@ -48,7 +48,10 @@ export default async function SuccessPage() {
           {publicCopy.success.title}
         </h1>
         <p className="mx-auto mt-3 max-w-md text-center text-xs leading-relaxed text-ink/62 sm:text-sm">{publicCopy.success.subtitle}</p>
-        <Link href="/" className="mt-6 inline-flex rounded-2xl bg-gradient-to-r from-wine via-clay to-amber px-6 py-4 font-bold text-white">
+        <Link
+          href="/apostas"
+          className="mt-6 inline-flex rounded-2xl bg-gradient-to-r from-wine via-clay to-amber px-6 py-4 font-bold text-white"
+        >
           {publicCopy.success.cta}
         </Link>
       </section>

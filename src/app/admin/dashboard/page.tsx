@@ -6,6 +6,7 @@ import { buildParticipantRanking, getPodium, hasOfficialResult } from "@/lib/adm
 import { getCurrentAdmin } from "@/lib/auth";
 import { adminCopy } from "@/lib/copy";
 import { formatCpf } from "@/lib/cpf";
+import { filterMatchesForCurrentBolaoWindow, getMatchDisplayTime } from "@/lib/matches";
 import { formatPhoneBR } from "@/lib/phone";
 import { prisma } from "@/lib/prisma";
 import { getSaoPauloDateString } from "@/lib/timezone";
@@ -15,11 +16,14 @@ export default async function AdminDashboardPage() {
   if (!admin) redirect("/admin/login");
 
   const today = getSaoPauloDateString();
+  const yesterday = getSaoPauloDateString(new Date(Date.now() - 24 * 60 * 60 * 1000));
+  const tomorrow = getSaoPauloDateString(new Date(Date.now() + 24 * 60 * 60 * 1000));
+
   const [participants, bets, todayMatchesBase, allMatchesBase] = await Promise.all([
     prisma.participant.count(),
     prisma.bet.count(),
     prisma.match.findMany({
-      where: { matchDate: today },
+      where: { matchDate: { in: [today, yesterday, tomorrow] } },
       include: { _count: { select: { bets: true } } },
       orderBy: { kickoffAt: "asc" }
     }),
@@ -33,10 +37,12 @@ export default async function AdminDashboardPage() {
     })
   ]);
 
-  const [todayMatches, allMatches] = await Promise.all([
+  const [dashboardMatches, allMatches] = await Promise.all([
     attachMatchResults(todayMatchesBase),
     attachMatchResults(allMatchesBase)
   ]);
+
+  const visibleMatches = filterMatchesForCurrentBolaoWindow(dashboardMatches).matches;
   const matchesWithResults = allMatches.filter((match) => hasOfficialResult(match));
 
   const ranking = buildParticipantRanking(matchesWithResults);
@@ -56,7 +62,7 @@ export default async function AdminDashboardPage() {
           <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
             <Metric label="Participantes" value={participants} />
             <Metric label="Apostas" value={bets} />
-            <Metric label="Jogos de hoje" value={todayMatches.length} />
+            <Metric label="Jogos de hoje" value={visibleMatches.length} />
             <Metric label="Jogos apurados" value={matchesWithResults.length} />
             <Metric label="Acertos totais" value={totalCorrectPredictions} />
             <Metric label="Acertadores únicos" value={ranking.length} />
@@ -128,8 +134,8 @@ export default async function AdminDashboardPage() {
           <div className="rounded-[1.75rem] bg-white/85 p-5 shadow-card">
             <h2 className="font-heading text-2xl font-bold text-ink">{adminCopy.dashboard.todayMatchesTitle}</h2>
             <div className="mt-4 grid gap-3">
-              {todayMatches.length ? (
-                todayMatches.map((match: any) => (
+              {visibleMatches.length ? (
+                visibleMatches.map((match: any) => (
                   <div
                     key={match.id}
                     className="flex flex-col justify-between rounded-2xl border border-ink/10 bg-field p-4 sm:flex-row sm:items-center"
@@ -139,7 +145,7 @@ export default async function AdminDashboardPage() {
                         {match.homeTeam} x {match.awayTeam}
                       </strong>
                       <span className="ml-2 text-sm text-ink/60">
-                        {match.groupName} às {match.matchTime}
+                        {match.groupName} às {getMatchDisplayTime(match)}
                       </span>
                     </span>
                     <div className="mt-3 flex flex-wrap gap-2 sm:mt-0">

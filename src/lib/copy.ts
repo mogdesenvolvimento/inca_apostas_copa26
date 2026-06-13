@@ -65,7 +65,7 @@ export const publicCopy = {
     logoutConfirm: "Deseja sair da sua participação?"
   },
   success: {
-    badge: "Aposta Enviada!",
+    badge: "PALPITES ENVIADOS",
     title: "Boa sorte\nAgora é Jogo",
     subtitle: "* Seus palpites já estão registrados e não dá mais pra mexer neles.",
     cta: "Voltar ao início"

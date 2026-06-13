@@ -28,6 +28,15 @@ export function formatDateTimeBR(date: Date) {
   }).format(date);
 }
 
+export function formatTimeBR(date: Date) {
+  return new Intl.DateTimeFormat("pt-BR", {
+    timeZone: APP_TIME_ZONE,
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23"
+  }).format(date);
+}
+
 export function formatDateBR(dateString: string) {
   const [year, month, day] = dateString.split("-");
   return `${day}/${month}/${year}`;

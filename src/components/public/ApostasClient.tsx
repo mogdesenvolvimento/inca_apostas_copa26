@@ -20,6 +20,11 @@ type MatchItem = {
   homeTeam: string;
   awayTeam: string;
   status: MatchStatus;
+  timezoneNotice?: string | null;
+  timezoneDisplay?: {
+    localLabel: string;
+    brasiliaLabel: string;
+  } | null;
   existingBet?: {
     homeScoreGuess: number;
     awayScoreGuess: number;
@@ -297,9 +302,16 @@ export function ApostasClient() {
                 <div className="mb-4 h-1.5 w-24 rounded-full bg-gradient-to-r from-wine via-amber to-teal" />
                 <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
                   <span className="rounded-full bg-teal/12 px-3 py-1 font-bold text-teal">{match.groupName}</span>
-                  <span className="font-bold text-ink/70">
-                    {formatDate(match.matchDate)} às {match.matchTime}
-                  </span>
+                  {match.timezoneDisplay ? (
+                    <div className="text-right text-xs font-bold leading-relaxed text-ink/70 sm:text-sm">
+                      <p>{match.timezoneDisplay.localLabel}</p>
+                      <p>{match.timezoneDisplay.brasiliaLabel}</p>
+                    </div>
+                  ) : (
+                    <span className="font-bold text-ink/70">
+                      {formatDate(match.matchDate)} às {match.matchTime}
+                    </span>
+                  )}
                 </div>
                 <div className="mt-5 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
                   <strong className="text-right text-lg">{match.homeTeam}</strong>
@@ -344,6 +356,11 @@ export function ApostasClient() {
                 <p className={`mt-4 rounded-2xl px-4 py-3 text-center text-sm font-bold ${statusPresentation.className}`}>
                   {statusPresentation.label}
                 </p>
+                {match.timezoneNotice ? (
+                  <p className="mt-3 rounded-2xl border border-teal/12 bg-teal/8 px-4 py-3 text-center text-xs leading-relaxed text-ink/70">
+                    {match.timezoneNotice}
+                  </p>
+                ) : null}
               </article>
             );
           })}
