@@ -12,6 +12,11 @@ import { publicCopy, stateMessages } from "@/lib/copy";
 
 type MatchStatus = "available" | "already_bet" | "closed";
 
+type MatchFilters = {
+  date: string;
+  group: string;
+};
+
 type MatchItem = {
   id: string;
   groupName: string;
@@ -52,18 +57,11 @@ function getStatusPresentation(status: MatchStatus) {
   };
 }
 
-function groupMatchesByDate(matches: MatchItem[]) {
-  return matches.reduce<Record<string, MatchItem[]>>((accumulator, match) => {
-    accumulator[match.matchDate] ??= [];
-    accumulator[match.matchDate].push(match);
-    return accumulator;
-  }, {});
-}
-
 export function ApostasClient() {
   const router = useRouter();
   const [participantName, setParticipantName] = useState("");
   const [matches, setMatches] = useState<MatchItem[]>([]);
+  const [groups, setGroups] = useState<string[]>([]);
   const [scores, setScores] = useState<Record<string, { home: string; away: string }>>({});
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -71,6 +69,10 @@ export function ApostasClient() {
   const [submitting, setSubmitting] = useState(false);
   const [authenticated, setAuthenticated] = useState(true);
   const [showAwardsModal, setShowAwardsModal] = useState(false);
+  const [filterDate, setFilterDate] = useState("");
+  const [filterGroup, setFilterGroup] = useState("");
+  const [filtersApplied, setFiltersApplied] = useState(false);
+  const [appliedFilters, setAppliedFilters] = useState<MatchFilters>({ date: "", group: "" });
 
   useEffect(() => {
     setShowAwardsModal(true);
@@ -92,6 +94,9 @@ export function ApostasClient() {
   useEffect(() => {
     async function loadData() {
       try {
+        setLoading(true);
+        setError("");
+
         const meResponse = await fetch("/api/participant/me");
         if (meResponse.status === 401) {
           setAuthenticated(false);
@@ -102,7 +107,15 @@ export function ApostasClient() {
         const meData = await meResponse.json();
         setParticipantName(meData.name ?? "");
 
-        const matchesResponse = await fetch("/api/matches");
+        const query = new URLSearchParams();
+        if (appliedFilters.date) {
+          query.set("date", appliedFilters.date);
+        }
+        if (appliedFilters.group) {
+          query.set("group", appliedFilters.group);
+        }
+
+        const matchesResponse = await fetch(`/api/matches${query.toString() ? `?${query.toString()}` : ""}`);
         if (matchesResponse.status === 401) {
           setAuthenticated(false);
           router.replace("/login");
@@ -111,6 +124,8 @@ export function ApostasClient() {
 
         const data = await matchesResponse.json();
         setMatches(data.matches ?? []);
+        setGroups(data.groups ?? []);
+        setFiltersApplied(Boolean(data.filtered));
 
         if (!data.matches?.length) {
           setMessage(data.message ?? publicCopy.bets.noTodayMatches);
@@ -125,13 +140,23 @@ export function ApostasClient() {
     }
 
     void loadData();
-  }, [router]);
+  }, [router, appliedFilters]);
 
   const availableCount = matches.filter((match) => match.status === "available").length;
   const allTodayAlreadyBet = matches.length > 0 && matches.every((match) => match.status === "already_bet");
 
   function closeAwardsModal() {
     setShowAwardsModal(false);
+  }
+
+  function onFilterSubmit(event: FormEvent) {
+    event.preventDefault();
+    setError("");
+    setScores({});
+    setAppliedFilters({
+      date: filterDate,
+      group: filterGroup
+    });
   }
 
   async function onSubmit(event: FormEvent) {
@@ -233,7 +258,7 @@ export function ApostasClient() {
 
             <div className="mt-5 flex justify-center">
               <PrimaryButton type="button" onClick={closeAwardsModal} className="min-w-[180px]">
-              Fechar
+                Fechar
               </PrimaryButton>
             </div>
           </div>
@@ -247,7 +272,7 @@ export function ApostasClient() {
               <p className="text-sm font-semibold text-teal">
                 {publicCopy.bets.greetingPrefix}, {participantName}
               </p>
-              <h1 className="font-heading mt-3 text-3xl font-bold text-ink">{publicCopy.bets.title}</h1>
+              <h1 className="mt-3 font-heading text-3xl font-bold text-ink">{publicCopy.bets.title}</h1>
               <p className="mt-3 max-w-2xl text-sm text-ink/70">{publicCopy.bets.subtitle}</p>
               <p className="mt-2 max-w-2xl text-[0.92rem] font-medium leading-relaxed text-[#b35b5b]">
                 Apostas nos placares ficam liberadas até 10 minutos antes do início de cada jogo.
@@ -269,6 +294,33 @@ export function ApostasClient() {
           <ParticipantLogoutButton className="mt-4 sm:hidden" />
         </div>
 
+        <form
+          onSubmit={onFilterSubmit}
+          className="grid gap-3 rounded-[1.75rem] border border-white/70 bg-white/86 p-4 shadow-card md:grid-cols-[1fr_1fr_auto]"
+        >
+          <input
+            type="date"
+            value={filterDate}
+            onChange={(event) => setFilterDate(event.target.value)}
+            className="min-w-0 w-full rounded-2xl border border-ink/10 bg-field px-4 py-3"
+          />
+          <select
+            value={filterGroup}
+            onChange={(event) => setFilterGroup(event.target.value)}
+            className="min-w-0 w-full rounded-2xl border border-ink/10 bg-field px-4 py-3"
+          >
+            <option value="">Todos os grupos</option>
+            {groups.map((group) => (
+              <option key={group} value={group}>
+                {group}
+              </option>
+            ))}
+          </select>
+          <PrimaryButton type="submit" className="w-full md:w-auto" disabled={loading}>
+            Filtrar
+          </PrimaryButton>
+        </form>
+
         {message ? <StateMessage>{message}</StateMessage> : null}
         {error ? <p className="rounded-2xl bg-wine/10 p-4 text-sm font-bold text-wine">{error}</p> : null}
 
@@ -276,18 +328,20 @@ export function ApostasClient() {
           <div className="rounded-3xl border border-teal/20 bg-white/80 p-5 text-sm leading-relaxed text-ink shadow-card backdrop-blur">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <p>{message || publicCopy.bets.noTodayMatches}</p>
-              <Link
-                href="/api/calendar"
-                target="_blank"
-                className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-gradient-to-r from-wine via-clay to-amber px-5 py-3 text-center text-sm font-bold text-white shadow-card transition hover:brightness-110 md:shrink-0"
-              >
-                Veja o Calendário completo da Copa
-              </Link>
+              {!filtersApplied ? (
+                <Link
+                  href="/api/calendar"
+                  target="_blank"
+                  className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-gradient-to-r from-wine via-clay to-amber px-5 py-3 text-center text-sm font-bold text-white shadow-card transition hover:brightness-110 md:shrink-0"
+                >
+                  Veja o Calendário completo da Copa
+                </Link>
+              ) : null}
             </div>
           </div>
         ) : null}
 
-        {allTodayAlreadyBet ? <StateMessage>{stateMessages.allDone}</StateMessage> : null}
+        {allTodayAlreadyBet && !filtersApplied ? <StateMessage>{stateMessages.allDone}</StateMessage> : null}
 
         <form onSubmit={onSubmit} className="space-y-4">
           {matches.map((match) => {
