@@ -298,10 +298,15 @@ export function ApostasClient() {
           onSubmit={onFilterSubmit}
           className="grid gap-3 rounded-[1.75rem] border border-white/70 bg-white/86 p-4 shadow-card md:grid-cols-[1fr_1fr_auto]"
         >
+          <div className="md:col-span-full">
+            <p className="text-sm font-semibold text-ink/72">Pesquise os jogos por data ou grupo</p>
+          </div>
           <input
             type="date"
             value={filterDate}
             onChange={(event) => setFilterDate(event.target.value)}
+            placeholder="dd/mm/aaaa"
+            aria-label="Filtrar jogos por data"
             className="min-w-0 w-full rounded-2xl border border-ink/10 bg-field px-4 py-3"
           />
           <select
