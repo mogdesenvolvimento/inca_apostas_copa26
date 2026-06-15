@@ -326,7 +326,7 @@ export function ApostasClient() {
           </PrimaryButton>
         </form>
 
-        {message ? <StateMessage>{message}</StateMessage> : null}
+        {message && matches.length ? <StateMessage>{message}</StateMessage> : null}
         {error ? <p className="rounded-2xl bg-wine/10 p-4 text-sm font-bold text-wine">{error}</p> : null}
 
         {!matches.length ? (
