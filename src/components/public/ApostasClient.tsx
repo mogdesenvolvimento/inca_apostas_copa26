@@ -73,6 +73,7 @@ export function ApostasClient() {
   const [filterGroup, setFilterGroup] = useState("");
   const [filtersApplied, setFiltersApplied] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState<MatchFilters>({ date: "", group: "" });
+  const [dateInputType, setDateInputType] = useState<"text" | "date">("text");
 
   useEffect(() => {
     setShowAwardsModal(true);
@@ -302,9 +303,15 @@ export function ApostasClient() {
             <p className="text-sm font-semibold text-ink/72">Pesquise os jogos por data ou grupo</p>
           </div>
           <input
-            type="date"
+            type={dateInputType}
             value={filterDate}
             onChange={(event) => setFilterDate(event.target.value)}
+            onFocus={() => setDateInputType("date")}
+            onBlur={() => {
+              if (!filterDate) {
+                setDateInputType("text");
+              }
+            }}
             placeholder="dd/mm/aaaa"
             aria-label="Filtrar jogos por data"
             className="min-w-0 w-full rounded-2xl border border-ink/10 bg-field px-4 py-3"
