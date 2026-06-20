@@ -116,9 +116,9 @@ export function buildParticipantRanking(matches: MatchResultSummary[]): Particip
   let currentPosition = 0;
   let previousCount: number | null = null;
 
-  return sorted.map((item, index) => {
+  return sorted.map((item) => {
     if (previousCount !== item.correctCount) {
-      currentPosition = index + 1;
+      currentPosition += 1;
       previousCount = item.correctCount;
     }
 
