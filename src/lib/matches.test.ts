@@ -48,6 +48,24 @@ describe("isMatchAvailableForBet", () => {
     expect(isMatchAvailableForBet(shiftedMatch, new Date("2026-06-14T04:00:01.000Z"))).toBe(false);
   });
 
+  it("aplica a exceção de fuso para Tunísia x Japão mantendo a data local e o bloqueio em Brasília", () => {
+    const shiftedMatch = {
+      matchDate: "2026-06-21",
+      matchTime: "01:00",
+      kickoffAt: new Date("2026-06-21T04:00:00.000Z"),
+      isActive: true,
+      homeTeam: "Tunísia",
+      awayTeam: "Japão"
+    };
+
+    expect(getMatchDisplayDate(shiftedMatch)).toBe("2026-06-20");
+    expect(getMatchDisplayTime(shiftedMatch)).toBe("22:00");
+    expect(getMatchTimezoneNotice(shiftedMatch)).toContain("01:00 de 21/06/2026");
+    expect(isMatchAvailableForBet(shiftedMatch, new Date("2026-06-20T22:00:00.000Z"))).toBe(true);
+    expect(isMatchAvailableForBet(shiftedMatch, new Date("2026-06-21T03:59:59.000Z"))).toBe(true);
+    expect(isMatchAvailableForBet(shiftedMatch, new Date("2026-06-21T04:00:00.000Z"))).toBe(false);
+  });
+
   it("prioriza a data local da partida no calendário quando houver jogo carregado pela madrugada", () => {
     const shiftedMatch = {
       matchDate: "2026-06-13",

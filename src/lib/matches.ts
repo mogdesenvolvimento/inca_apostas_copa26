@@ -42,6 +42,14 @@ const TIMEZONE_OVERRIDES = new Map<string, TimezoneOverride>([
     }
   ],
   [
+    "tunisia|japao",
+    {
+      localDate: "2026-06-20",
+      localTime: "22:00",
+      brasiliaKickoffAt: new Date("2026-06-21T01:00:00-03:00")
+    }
+  ],
+  [
     "jordania|argelia",
     {
       localDate: "2026-06-22",
