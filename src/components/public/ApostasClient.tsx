@@ -1,39 +1,50 @@
-﻿"use client";
+"use client";
 
-import Image from "next/image";
-import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { PrimaryButton } from "@/components/PrimaryButton";
-import { StateMessage } from "@/components/StateMessage";
-import { IncaLogo } from "@/components/public/IncaLogo";
 import { ParticipantLogoutButton } from "@/components/public/ParticipantLogoutButton";
-import { publicCopy, stateMessages } from "@/lib/copy";
+import { PublicFooterLinks } from "@/components/public/PublicFooterLinks";
+import { publicCopy } from "@/lib/copy";
 
-type MatchStatus = "available" | "already_bet" | "closed";
-
-type MatchFilters = {
-  date: string;
-  group: string;
+type ParticipantResponse = {
+  id: string;
+  name: string;
+  cpf: string;
+  phone: string;
+  email: string | null;
+  registrationCode: string;
 };
 
-type MatchItem = {
+type ExistingBet = {
+  id: string;
+  homeScoreGuess: number;
+  awayScoreGuess: number;
+};
+
+type MatchResponse = {
   id: string;
   groupName: string;
   matchDate: string;
   matchTime: string;
   homeTeam: string;
   awayTeam: string;
-  status: MatchStatus;
-  timezoneNotice?: string | null;
-  timezoneDisplay?: {
+  status: "available" | "already_bet" | "closed";
+  existingBet: ExistingBet | null;
+  timezoneNotice: string | null;
+  timezoneDisplay: {
     localLabel: string;
     brasiliaLabel: string;
   } | null;
-  existingBet?: {
-    homeScoreGuess: number;
-    awayScoreGuess: number;
-  } | null;
+};
+
+type MatchesResponse = {
+  today: string;
+  displayDate: string;
+  filtered: boolean;
+  groups: string[];
+  message: string | null;
+  matches: MatchResponse[];
 };
 
 type ClassificationSummary = {
@@ -47,30 +58,34 @@ type ClassificationSummary = {
   leaderCount: number;
 };
 
-function formatDate(date: string) {
-  const [year, month, day] = date.split("-");
+type RankingResponse = {
+  available: boolean;
+  summary: ClassificationSummary | null;
+};
+
+const EMPTY_SCORE = "";
+
+function formatDate(dateString: string) {
+  const [year, month, day] = dateString.split("-");
   return `${day}/${month}/${year}`;
 }
 
-function getStatusPresentation(status: MatchStatus) {
-  if (status === "available") {
-    return {
-      label: "Palpite aberto",
-      disabled: false,
-      className: "border border-teal/20 bg-teal/14 text-teal"
-    };
+function formatFilterDateValue(value: string) {
+  if (!value) {
+    return "";
   }
 
-  return {
-    label: "Palpite fechado",
-    disabled: true,
-    className: "border border-wine/18 bg-wine/12 text-wine"
-  };
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return value;
+  }
+
+  const [day, month, year] = value.split("/");
+  return `${year}-${month}-${day}`;
 }
 
-function formatMissingAccertos(value: number) {
+function formatClassificationDistance(value: number) {
   if (value <= 0) {
-    return "";
+    return "Você já alcançou esta faixa";
   }
 
   return value === 1 ? "Falta 1 acerto" : `Faltam ${value} acertos`;
@@ -79,28 +94,105 @@ function formatMissingAccertos(value: number) {
 export function ApostasClient() {
   const router = useRouter();
   const closeClassificationButtonRef = useRef<HTMLButtonElement | null>(null);
-  const [participantName, setParticipantName] = useState("");
-  const [matches, setMatches] = useState<MatchItem[]>([]);
+
+  const [participant, setParticipant] = useState<ParticipantResponse | null>(null);
+  const [matches, setMatches] = useState<MatchResponse[]>([]);
   const [groups, setGroups] = useState<string[]>([]);
-  const [scores, setScores] = useState<Record<string, { home: string; away: string }>>({});
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [authenticated, setAuthenticated] = useState(true);
-  const [showAwardsModal, setShowAwardsModal] = useState(false);
+  const [showAwardsModal, setShowAwardsModal] = useState(true);
   const [showClassificationModal, setShowClassificationModal] = useState(false);
-  const [classificationSummary, setClassificationSummary] = useState<ClassificationSummary | null>(null);
   const [classificationAvailable, setClassificationAvailable] = useState(false);
+  const [classificationSummary, setClassificationSummary] = useState<ClassificationSummary | null>(null);
+  const [scores, setScores] = useState<Record<string, { home: string; away: string }>>({});
   const [filterDate, setFilterDate] = useState("");
   const [filterGroup, setFilterGroup] = useState("");
-  const [filtersApplied, setFiltersApplied] = useState(false);
-  const [appliedFilters, setAppliedFilters] = useState<MatchFilters>({ date: "", group: "" });
+  const [appliedDate, setAppliedDate] = useState("");
+  const [appliedGroup, setAppliedGroup] = useState("");
   const [dateInputType, setDateInputType] = useState<"text" | "date">("text");
 
   useEffect(() => {
-    setShowAwardsModal(true);
-  }, []);
+    let cancelled = false;
+
+    async function loadData() {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const query = new URLSearchParams();
+        if (appliedDate) {
+          query.set("date", appliedDate);
+        }
+        if (appliedGroup) {
+          query.set("group", appliedGroup);
+        }
+
+        const suffix = query.toString() ? `?${query.toString()}` : "";
+
+        const [participantResponse, matchesResponse, rankingResponse] = await Promise.all([
+          fetch("/api/participant/me", { cache: "no-store" }),
+          fetch(`/api/matches${suffix}`, { cache: "no-store" }),
+          fetch("/api/participant/ranking", { cache: "no-store" })
+        ]);
+
+        if (!participantResponse.ok) {
+          throw new Error(publicCopy.bets.needRegister);
+        }
+
+        if (!matchesResponse.ok) {
+          throw new Error("Não deu pra carregar os dados da tua rodada. Tenta de novo.");
+        }
+
+        const participantData = (await participantResponse.json()) as ParticipantResponse;
+        const matchesData = (await matchesResponse.json()) as MatchesResponse;
+
+        let rankingData: RankingResponse = { available: false, summary: null };
+        if (rankingResponse.ok) {
+          rankingData = (await rankingResponse.json()) as RankingResponse;
+        }
+
+        if (cancelled) {
+          return;
+        }
+
+        setParticipant(participantData);
+        setMatches(matchesData.matches);
+        setGroups(matchesData.groups);
+        setMessage(matchesData.message);
+        setClassificationAvailable(rankingData.available);
+        setClassificationSummary(rankingData.summary);
+        setScores(
+          Object.fromEntries(
+            matchesData.matches.map((match) => [
+              match.id,
+              {
+                home: match.existingBet ? String(match.existingBet.homeScoreGuess) : EMPTY_SCORE,
+                away: match.existingBet ? String(match.existingBet.awayScoreGuess) : EMPTY_SCORE
+              }
+            ])
+          )
+        );
+      } catch (loadError) {
+        if (cancelled) {
+          return;
+        }
+
+        setError(loadError instanceof Error ? loadError.message : "Não deu pra carregar os dados da tua rodada. Tenta de novo.");
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void loadData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [appliedDate, appliedGroup]);
 
   useEffect(() => {
     if (!showClassificationModal) {
@@ -108,102 +200,47 @@ export function ApostasClient() {
     }
 
     closeClassificationButtonRef.current?.focus();
-  }, [showClassificationModal]);
 
-  useEffect(() => {
-    if (!showClassificationModal) {
-      return;
-    }
-
-    function handleKeyDown(event: KeyboardEvent) {
+    const handleEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setShowClassificationModal(false);
       }
-    }
+    };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
   }, [showClassificationModal]);
 
   useEffect(() => {
     if (!showAwardsModal && !showClassificationModal) {
+      document.body.style.removeProperty("overflow");
       return;
     }
 
-    const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-
     return () => {
-      document.body.style.overflow = previousOverflow;
+      document.body.style.removeProperty("overflow");
     };
   }, [showAwardsModal, showClassificationModal]);
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        setLoading(true);
-        setError("");
+  const availableMatches = useMemo(
+    () => matches.filter((match) => match.status === "available"),
+    [matches]
+  );
 
-        const meResponse = await fetch("/api/participant/me");
-        if (meResponse.status === 401) {
-          setAuthenticated(false);
-          router.replace("/login");
-          return;
-        }
+  const allVisibleMatchesAlreadyBet = useMemo(
+    () => matches.length > 0 && matches.every((match) => match.status === "already_bet"),
+    [matches]
+  );
 
-        const meData = await meResponse.json();
-        setParticipantName(meData.name ?? "");
-
-        const query = new URLSearchParams();
-        if (appliedFilters.date) {
-          query.set("date", appliedFilters.date);
-        }
-        if (appliedFilters.group) {
-          query.set("group", appliedFilters.group);
-        }
-
-        const [matchesResponse, rankingResponse] = await Promise.all([
-          fetch(`/api/matches${query.toString() ? `?${query.toString()}` : ""}`),
-          fetch("/api/participant/ranking")
-        ]);
-
-        if (matchesResponse.status === 401 || rankingResponse.status === 401) {
-          setAuthenticated(false);
-          router.replace("/login");
-          return;
-        }
-
-        const matchesData = await matchesResponse.json();
-        setMatches(matchesData.matches ?? []);
-        setGroups(matchesData.groups ?? []);
-        setFiltersApplied(Boolean(matchesData.filtered));
-
-        if (!matchesData.matches?.length) {
-          setMessage(matchesData.message ?? publicCopy.bets.noTodayMatches);
-        } else {
-          setMessage(matchesData.message ?? "");
-        }
-
-        if (rankingResponse.ok) {
-          const rankingData = await rankingResponse.json();
-          setClassificationSummary(rankingData.summary ?? null);
-          setClassificationAvailable(Boolean(rankingData.available && rankingData.summary));
-        } else {
-          setClassificationSummary(null);
-          setClassificationAvailable(false);
-        }
-      } catch {
-        setError("NÃ£o deu pra carregar os dados da tua rodada. Tenta de novo.");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    void loadData();
-  }, [router, appliedFilters]);
-
-  const availableCount = matches.filter((match) => match.status === "available").length;
-  const allTodayAlreadyBet = matches.length > 0 && matches.every((match) => match.status === "already_bet");
+  const hasAtLeastOneFilledScore = useMemo(
+    () =>
+      availableMatches.some((match) => {
+        const current = scores[match.id];
+        return current && current.home !== EMPTY_SCORE && current.away !== EMPTY_SCORE;
+      }),
+    [availableMatches, scores]
+  );
 
   const classificationTop3Text = useMemo(() => {
     if (!classificationSummary) {
@@ -211,14 +248,14 @@ export function ApostasClient() {
     }
 
     if (!classificationSummary.inRanking) {
-      return formatMissingAccertos(classificationSummary.top3Distance);
+      return formatClassificationDistance(classificationSummary.top3Distance);
     }
 
-    if ((classificationSummary.position ?? Number.POSITIVE_INFINITY) <= 3) {
-      return "VocÃª jÃ¡ estÃ¡ no Top 3";
+    if (classificationSummary.position !== null && classificationSummary.position <= 3) {
+      return "Você já está no Top 3";
     }
 
-    return formatMissingAccertos(classificationSummary.top3Distance);
+    return formatClassificationDistance(classificationSummary.top3Distance);
   }, [classificationSummary]);
 
   const classificationLeaderText = useMemo(() => {
@@ -227,118 +264,141 @@ export function ApostasClient() {
     }
 
     if (!classificationSummary.inRanking) {
-      return formatMissingAccertos(classificationSummary.leaderDistance);
+      return formatClassificationDistance(classificationSummary.leaderDistance);
     }
 
-    if ((classificationSummary.position ?? Number.POSITIVE_INFINITY) === 1) {
-      return classificationSummary.leaderCount > 1 ? "Empatado na lideranÃ§a" : "VocÃª Ã© o lÃ­der atual";
+    if (classificationSummary.position === 1) {
+      return classificationSummary.leaderCount > 1 ? "Empatado na liderança" : "Você é o líder atual";
     }
 
-    return formatMissingAccertos(classificationSummary.leaderDistance);
+    return formatClassificationDistance(classificationSummary.leaderDistance);
   }, [classificationSummary]);
 
   const classificationStatusText = useMemo(() => {
     if (!classificationSummary) {
-      return "";
+      return publicCopy.bets.noRankingYet;
     }
 
     if (!classificationSummary.inRanking) {
-      return `ðŸ“‰ VocÃª ainda estÃ¡ fora do ranking atual. ${formatMissingAccertos(
-        classificationSummary.top3Distance
-      )} para entrar no Top 3.`;
+      return `📉 Você ainda está fora do ranking atual. Faltam ${classificationSummary.top3Distance} acertos para entrar no Top 3.`;
     }
 
-    if ((classificationSummary.position ?? Number.POSITIVE_INFINITY) === 1) {
-      return "ðŸ‘‘ VocÃª estÃ¡ liderando o ranking atual.";
+    if (classificationSummary.position === 1) {
+      return "👑 Você está liderando o ranking atual.";
     }
 
-    if ((classificationSummary.position ?? Number.POSITIVE_INFINITY) <= 3) {
-      return "ðŸš€ VocÃª estÃ¡ entre os melhores participantes.";
+    if (classificationSummary.position !== null && classificationSummary.position <= 3) {
+      return "🚀 Você está entre os melhores participantes.";
     }
 
-    return `ðŸ“ˆ ${formatMissingAccertos(classificationSummary.top3Distance)} para entrar no Top 3.`;
+    return `📈 Faltam ${classificationSummary.top3Distance} acertos para entrar no Top 3.`;
   }, [classificationSummary]);
 
-  function closeAwardsModal() {
-    setShowAwardsModal(false);
+  const classificationProgressText = useMemo(() => {
+    if (!classificationSummary) {
+      return "";
+    }
+
+    return `${classificationSummary.correctCount} de ${classificationSummary.totalResultsCount} resultado${
+      classificationSummary.totalResultsCount === 1 ? "" : "s"
+    } acertado${classificationSummary.correctCount === 1 ? "" : "s"}`;
+  }, [classificationSummary]);
+
+  function handleScoreChange(matchId: string, side: "home" | "away", value: string) {
+    if (value !== EMPTY_SCORE && !/^\d+$/.test(value)) {
+      return;
+    }
+
+    setScores((current) => ({
+      ...current,
+      [matchId]: {
+        home: current[matchId]?.home ?? EMPTY_SCORE,
+        away: current[matchId]?.away ?? EMPTY_SCORE,
+        [side]: value
+      }
+    }));
   }
 
-  function closeClassificationModal() {
-    setShowClassificationModal(false);
-  }
-
-  function onFilterSubmit(event: FormEvent) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError("");
-    setScores({});
-    setAppliedFilters({
-      date: filterDate,
-      group: filterGroup
-    });
-  }
 
-  async function onSubmit(event: FormEvent) {
-    event.preventDefault();
-    setError("");
+    setError(null);
+    setMessage(null);
 
-    const bets = matches
-      .filter((match) => match.status === "available")
-      .map((match) => ({
-        matchId: match.id,
-        homeScoreGuess: scores[match.id]?.home,
-        awayScoreGuess: scores[match.id]?.away
-      }))
-      .filter(
-        (bet) =>
-          bet.homeScoreGuess !== undefined &&
-          bet.homeScoreGuess !== "" &&
-          bet.awayScoreGuess !== undefined &&
-          bet.awayScoreGuess !== ""
-      );
+    if (!hasAtLeastOneFilledScore) {
+      setError("Preenche ao menos um placar para enviar teu palpite.");
+      return;
+    }
+
+    const bets = availableMatches
+      .map((match) => {
+        const current = scores[match.id];
+        if (!current || current.home === EMPTY_SCORE || current.away === EMPTY_SCORE) {
+          return null;
+        }
+
+        return {
+          matchId: match.id,
+          homeScoreGuess: Number(current.home),
+          awayScoreGuess: Number(current.away)
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null);
 
     if (!bets.length) {
       setError("Preenche ao menos um placar para enviar teu palpite.");
       return;
     }
 
-    if (!window.confirm(publicCopy.bets.confirmation)) {
-      return;
-    }
-
     setSubmitting(true);
-    const response = await fetch("/api/bets", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ bets })
-    });
-    const data = await response.json();
-    setSubmitting(false);
 
-    if (response.status === 401) {
-      router.replace("/login");
-      return;
+    try {
+      const response = await fetch("/api/bets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bets })
+      });
+
+      const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+
+      if (!response.ok) {
+        throw new Error(payload?.error || "Não deu pra registrar teus palpites.");
+      }
+
+      router.push("/sucesso");
+      router.refresh();
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : "Não deu pra registrar teus palpites.");
+    } finally {
+      setSubmitting(false);
     }
-
-    if (!response.ok) {
-      setError(data.error ?? "NÃ£o deu pra registrar teus palpites.");
-      return;
-    }
-
-    router.push("/sucesso");
   }
+
+  function handleFilterSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setAppliedDate(filterDate);
+    setAppliedGroup(filterGroup);
+  }
+
+  const classificationButton = (
+    <button
+      type="button"
+      onClick={() => setShowClassificationModal(true)}
+      className="inline-flex min-h-[54px] items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-wine via-clay to-amber px-6 py-4 text-center text-base font-bold text-white shadow-card transition hover:brightness-105"
+      aria-label="Abrir minha classificação"
+    >
+      <span aria-hidden="true" className="text-lg leading-none">
+        🏆
+      </span>
+      <span>Ver Minha Classificação</span>
+    </button>
+  );
 
   if (loading) {
-    return <StateMessage>{publicCopy.bets.emptyLoading}</StateMessage>;
-  }
-
-  if (!authenticated) {
     return (
-      <StateMessage>
-        {publicCopy.bets.needRegister}{" "}
-        <Link href="/login" className="font-bold text-teal underline">
-          {publicCopy.bets.goToRegister}
-        </Link>
-      </StateMessage>
+      <section className="rounded-[2rem] border border-white/70 bg-white/80 p-6 text-center shadow-card sm:p-8">
+        <p className="text-base text-ink/70">{publicCopy.bets.emptyLoading}</p>
+      </section>
     );
   }
 
@@ -346,38 +406,53 @@ export function ApostasClient() {
     <>
       {showAwardsModal ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/55 px-4 py-6 backdrop-blur-[2px] transition-opacity duration-300"
-          onClick={closeAwardsModal}
+          className="fixed inset-0 z-40 flex items-center justify-center bg-[#1F2A37]/45 px-4 py-6 backdrop-blur-[4px]"
+          onClick={() => setShowAwardsModal(false)}
         >
           <div
-            role="dialog"
-            aria-modal="true"
-            aria-label="PremiaÃ§Ãµes da semana"
-            className="max-h-[92vh] w-[92vw] max-w-3xl overflow-y-auto rounded-[2rem] border border-white/70 bg-white/95 p-4 shadow-card sm:p-6"
+            className="relative w-full max-w-[720px] rounded-[2rem] bg-[#F8EFD9] p-5 shadow-[0_30px_80px_rgba(31,42,55,0.24)] sm:p-7"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="px-2 text-center sm:px-4">
-              <h2 className="font-heading text-3xl font-bold text-ink sm:text-4xl">Quem acerta mais, ganha!</h2>
-              <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-ink/72 sm:text-base">
-                FaÃ§a seus palpites e concorra aos prÃªmios da fase.
+            <button
+              type="button"
+              onClick={() => setShowAwardsModal(false)}
+              className="absolute right-5 top-5 inline-flex h-11 w-11 items-center justify-center rounded-full border border-ink/18 bg-white/92 text-xl text-ink transition hover:bg-white"
+              aria-label="Fechar modal de premiações"
+            >
+              ×
+            </button>
+
+            <div className="pr-12 text-center">
+              <div className="inline-flex items-center justify-center gap-2">
+                <span aria-hidden="true" className="text-xl leading-none">
+                  🏆
+                </span>
+                <h2 className="font-heading text-[clamp(1.7rem,4vw,2.4rem)] font-bold text-ink">
+                  Quem acerta mais, ganha!
+                </h2>
+              </div>
+              <p className="mt-2 text-sm text-ink/70 sm:text-base">
+                Faça seus palpites e concorra aos prêmios da fase.
               </p>
             </div>
 
-            <div className="mx-auto mt-5 w-full max-w-[520px] overflow-hidden rounded-[1.5rem]">
-              <Image
-                src="/assets/awards-modal-2026-06-10.jpeg"
-                alt="PremiaÃ§Ãµes da fase de grupos da Copa Inca"
-                width={1080}
-                height={1440}
-                priority
-                className="mx-auto block h-auto w-full max-w-[520px]"
-              />
-            </div>
+            <Image
+              src="/assets/premiacao-fase-de-grupos.jpeg"
+              alt="Premiações da fase de grupos da Copa Inca"
+              width={1080}
+              height={1350}
+              className="mx-auto mt-5 block h-auto w-full max-w-[520px] rounded-[1.6rem] object-contain"
+              priority
+            />
 
-            <div className="mt-5 flex justify-center">
-              <PrimaryButton type="button" onClick={closeAwardsModal} className="min-w-[180px]">
+            <div className="mt-6 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setShowAwardsModal(false)}
+                className="inline-flex min-w-[200px] items-center justify-center rounded-2xl bg-gradient-to-r from-wine via-clay to-amber px-8 py-4 text-lg font-bold text-white shadow-card transition hover:brightness-105"
+              >
                 Fechar
-              </PrimaryButton>
+              </button>
             </div>
           </div>
         </div>
@@ -385,260 +460,277 @@ export function ApostasClient() {
 
       {showClassificationModal ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/58 px-4 py-6 backdrop-blur-[4px]"
-          onClick={closeClassificationModal}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#1F2A37]/48 px-4 py-6 backdrop-blur-[5px]"
+          onClick={() => setShowClassificationModal(false)}
         >
           <div
             role="dialog"
             aria-modal="true"
-            aria-label="Minha ClassificaÃ§Ã£o"
-            className="w-[92vw] max-w-md rounded-[1.75rem] border border-[#ead7b7] bg-[#f7ead6] p-5 shadow-[0_18px_45px_rgba(31,42,55,0.18)] sm:p-6"
+            aria-label="Minha Classificação"
+            className="relative w-full max-w-[540px] rounded-[1.75rem] border border-[#E9DCC0] bg-[#F8EFD9] p-5 shadow-[0_26px_70px_rgba(31,42,55,0.20)] sm:p-7"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="relative flex min-h-10 items-center justify-center">
-              <div className="text-center">
-                <h2 className="font-heading text-2xl font-bold text-ink">ðŸ† Minha ClassificaÃ§Ã£o</h2>
-                <p className="mt-1 text-sm text-ink/60">Desempenho atual na rodada</p>
+            <button
+              ref={closeClassificationButtonRef}
+              type="button"
+              onClick={() => setShowClassificationModal(false)}
+              className="absolute right-5 top-5 inline-flex h-11 w-11 items-center justify-center rounded-full border border-ink/18 bg-white/92 text-xl text-ink transition hover:bg-white"
+              aria-label="Fechar minha classificação"
+            >
+              ×
+            </button>
+
+            <div className="pr-12 text-center sm:pr-14">
+              <div className="inline-flex max-w-full items-center justify-center gap-2 text-center">
+                <span aria-hidden="true" className="text-xl leading-none">
+                  🏆
+                </span>
+                <h2 className="font-heading text-[clamp(1.7rem,4vw,2.4rem)] font-bold leading-tight text-ink">
+                  Minha Classificação
+                </h2>
               </div>
-              <button
-                ref={closeClassificationButtonRef}
-                type="button"
-                onClick={closeClassificationModal}
-                aria-label="Fechar modal de classificaÃ§Ã£o"
-                className="absolute right-0 top-0 inline-flex h-10 w-10 items-center justify-center rounded-full border border-ink/10 bg-white text-lg font-bold text-ink/70 shadow-sm transition hover:bg-white/90"
-              >
-                Ã—
-              </button>
+              <p className="mt-1 text-sm text-ink/68">Desempenho atual na rodada</p>
             </div>
 
             {classificationAvailable && classificationSummary ? (
-              <div className="mt-5 space-y-4 text-center">
-                <div className="rounded-[1.5rem] bg-white px-5 py-5 shadow-sm">
-                  <p className="font-heading text-[clamp(32px,7vw,42px)] font-bold leading-none text-ink">
-                    {classificationSummary.inRanking ? `#${classificationSummary.position}Âº Lugar` : "Fora do ranking"}
+              <div className="mt-5 space-y-4">
+                <div className="rounded-[1.45rem] bg-white px-5 py-5 text-center shadow-[0_8px_22px_rgba(31,42,55,0.08)]">
+                  <p className="font-heading text-[clamp(2rem,6vw,3.25rem)] font-bold leading-none text-ink">
+                    {classificationSummary.inRanking && classificationSummary.position !== null
+                      ? `#${classificationSummary.position}º Lugar`
+                      : "Fora do ranking"}
                   </p>
                 </div>
 
-                <div className="rounded-[1.5rem] bg-white px-5 py-4 shadow-sm">
-                  <p className="text-lg font-bold text-ink">
-                    âœ… {classificationSummary.correctCount}{" "}
+                <div className="rounded-[1.35rem] bg-white px-5 py-4 text-center shadow-[0_8px_22px_rgba(31,42,55,0.08)]">
+                  <p className="text-lg font-semibold text-ink">
+                    ✅ {classificationSummary.correctCount}{" "}
                     {classificationSummary.correctCount === 1 ? "Acerto" : "Acertos"}
                   </p>
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-[1.5rem] bg-white px-4 py-4 shadow-sm">
-                    <p className="text-sm font-semibold text-ink/62">ðŸ¥‰ Para entrar no Top 3</p>
+                  <div className="rounded-[1.35rem] bg-white px-5 py-4 text-center shadow-[0_8px_22px_rgba(31,42,55,0.08)]">
+                    <p className="text-sm font-semibold text-ink">🥉 Para entrar no Top 3</p>
                     <p className="mt-2 text-base font-bold text-ink">{classificationTop3Text}</p>
                   </div>
-                  <div className="rounded-[1.5rem] bg-white px-4 py-4 shadow-sm">
-                    <p className="text-sm font-semibold text-ink/62">ðŸ¥‡ Para assumir a lideranÃ§a</p>
+
+                  <div className="rounded-[1.35rem] bg-white px-5 py-4 text-center shadow-[0_8px_22px_rgba(31,42,55,0.08)]">
+                    <p className="text-sm font-semibold text-ink">🥇 Para assumir a liderança</p>
                     <p className="mt-2 text-base font-bold text-ink">{classificationLeaderText}</p>
                   </div>
                 </div>
 
-                <div className="rounded-[1.5rem] bg-white px-5 py-4 shadow-sm">
-                  <p className="text-sm font-semibold text-ink/62">ðŸ“Š Desempenho da Rodada</p>
-                  <p className="mt-2 text-sm text-ink/72">
-                    {classificationSummary.correctCount} de {classificationSummary.totalResultsCount}{" "}
-                    {classificationSummary.totalResultsCount === 1 ? "resultado acertado" : "resultados acertados"}
-                  </p>
-                  <div className="mt-4 h-3 overflow-hidden rounded-full bg-page/95">
+                <div className="rounded-[1.35rem] bg-white px-5 py-5 shadow-[0_8px_22px_rgba(31,42,55,0.08)]">
+                  <div className="text-center">
+                    <p className="text-sm font-semibold text-ink">📊 Desempenho da Rodada</p>
+                    <p className="mt-2 text-sm text-ink/70">{classificationProgressText}</p>
+                  </div>
+
+                  <div className="mt-4 h-3 overflow-hidden rounded-full bg-[#E7DABF]">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-wine via-clay to-amber transition-[width]"
+                      className="h-full rounded-full bg-gradient-to-r from-wine via-clay to-amber transition-[width] duration-500"
                       style={{ width: `${classificationSummary.progressPercent}%` }}
                     />
                   </div>
-                  <p className="mt-3 text-sm font-bold text-ink/72">{classificationSummary.progressPercent}%</p>
+
+                  <p className="mt-3 text-center text-sm font-semibold text-ink/72">
+                    {classificationSummary.progressPercent}%
+                  </p>
                 </div>
 
-                <div className="rounded-[1.5rem] bg-white px-5 py-4 shadow-sm">
-                  <p className="text-sm font-semibold leading-relaxed text-ink">{classificationStatusText}</p>
+                <div className="rounded-[1.35rem] bg-white px-5 py-4 text-center shadow-[0_8px_22px_rgba(31,42,55,0.08)]">
+                  <p className="text-sm font-medium leading-relaxed text-ink">{classificationStatusText}</p>
                 </div>
               </div>
             ) : (
-              <div className="mt-5 rounded-[1.5rem] bg-white px-5 py-6 text-center text-sm leading-relaxed text-ink/72 shadow-sm">
-                Sua classificaÃ§Ã£o ainda nÃ£o estÃ¡ disponÃ­vel nesta rodada.
+              <div className="mt-5 rounded-[1.35rem] bg-white px-5 py-6 text-center shadow-[0_8px_22px_rgba(31,42,55,0.08)]">
+                <p className="text-base leading-relaxed text-ink">{publicCopy.bets.noRankingYet}</p>
               </div>
             )}
           </div>
         </div>
       ) : null}
 
-      <section className="space-y-5">
-        <div className="rounded-[2rem] border border-white/70 bg-white/86 p-6 shadow-card">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-sm font-semibold text-teal">
-                {publicCopy.bets.greetingPrefix}, {participantName}
-              </p>
-              <h1 className="mt-3 font-heading text-3xl font-bold text-ink">{publicCopy.bets.title}</h1>
-              <p className="mt-3 max-w-2xl text-sm text-ink/70">{publicCopy.bets.subtitle}</p>
-              <p className="mt-2 max-w-2xl text-[0.92rem] font-medium leading-relaxed text-[#b35b5b]">
-                Apostas nos placares ficam liberadas atÃ© 10 minutos antes do inÃ­cio de cada jogo.
-              </p>
-              <div className="mt-4 flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap">
-                <a
-                  href="https://www.fifa.com/pt/tournaments/mens/worldcup/canadamexicousa2026/articles/copa-mundo-2026-tabela-jogos"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex min-h-11 w-full items-center justify-center rounded-2xl border border-teal/18 bg-white/82 px-6 py-3 text-center text-sm font-bold text-teal shadow-card transition hover:bg-teal/5 sm:w-auto"
-                >
-                  Veja tabela oficial da FIFA
-                </a>
-                <PrimaryButton
-                  type="button"
-                  onClick={() => setShowClassificationModal(true)}
-                  className="w-full sm:w-auto lg:hidden"
-                >
-                  ðŸ† Ver Minha ClassificaÃ§Ã£o
-                </PrimaryButton>
-              </div>
-            </div>
-            <div className="flex flex-col items-end gap-3">
-              <ParticipantLogoutButton className="hidden sm:inline-flex" />
-              <IncaLogo variant="hero" className="hidden sm:flex" priority />
-              <PrimaryButton
-                type="button"
-                onClick={() => setShowClassificationModal(true)}
-                className="hidden w-full max-w-[260px] self-end lg:inline-flex"
+      <section className="rounded-[2rem] border border-white/70 bg-white/85 p-4 shadow-card sm:p-6">
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-start">
+          <div className="space-y-3">
+            <p className="text-sm font-semibold text-teal">
+              {publicCopy.bets.greetingPrefix}, {participant?.name ?? "participante"}
+            </p>
+            <h1 className="font-heading max-w-[16ch] text-[clamp(2.2rem,6vw,3.8rem)] font-bold leading-[0.95] text-ink">
+              {publicCopy.bets.title}
+            </h1>
+            <p className="text-base text-ink/74 sm:text-lg">{publicCopy.bets.subtitle}</p>
+            <p className="text-base font-medium text-[#D85C45]">
+              Apostas nos placares ficam liberadas até 10 minutos antes do início de cada jogo.
+            </p>
+
+            <div className="flex flex-col gap-3 sm:flex-row lg:hidden">
+              <a
+                href="https://www.fifa.com/pt/tournaments/mens/worldcup/canadamexicousa2026/articles/copa-mundo-2026-tabela-jogos"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-[54px] items-center justify-center rounded-2xl border border-teal/20 bg-white px-6 py-4 text-center text-base font-semibold text-teal shadow-card transition hover:bg-teal/5"
               >
-                ðŸ† Ver Minha ClassificaÃ§Ã£o
-              </PrimaryButton>
+                Veja tabela oficial da FIFA
+              </a>
+              {classificationButton}
             </div>
           </div>
-          <ParticipantLogoutButton className="mt-4 sm:hidden" />
+
+          <div className="flex flex-col items-end gap-4">
+            <ParticipantLogoutButton />
+            <div className="hidden lg:flex lg:flex-col lg:items-end lg:gap-4">
+              <div className="rounded-[1.75rem] border border-[#E7DABF] bg-[#F8EFD9] p-4 shadow-card">
+                <Image
+                  src="/assets/inca-logo.png"
+                  alt="Logo do Inca Bar"
+                  width={110}
+                  height={110}
+                  className="h-auto w-[92px] object-contain sm:w-[110px]"
+                  priority
+                />
+              </div>
+              <div className="w-full">{classificationButton}</div>
+            </div>
+          </div>
         </div>
 
-        <form
-          onSubmit={onFilterSubmit}
-          className="grid gap-3 rounded-[1.75rem] border border-white/70 bg-white/86 p-4 shadow-card md:grid-cols-[1fr_1fr_auto]"
-        >
-          <div className="md:col-span-full">
-            <p className="text-sm font-semibold text-ink/72">Pesquise os jogos por data ou grupo</p>
+        <div className="mt-6 rounded-[1.7rem] border border-white/70 bg-[#F8EFD9]/92 p-4 shadow-card sm:p-5">
+          <p className="mb-3 text-sm font-semibold text-ink">Pesquise os jogos por data ou grupo</p>
+          <form className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_160px]" onSubmit={handleFilterSubmit}>
+            <input
+              type={dateInputType}
+              value={filterDate}
+              onChange={(event) => setFilterDate(formatFilterDateValue(event.target.value))}
+              onFocus={() => setDateInputType("date")}
+              onBlur={() => {
+                if (!filterDate) {
+                  setDateInputType("text");
+                }
+              }}
+              placeholder="dd/mm/aaaa"
+              className="min-h-[56px] rounded-2xl border border-[#D7EAE6] bg-white px-5 text-base text-ink outline-none transition focus:border-teal"
+            />
+
+            <select
+              value={filterGroup}
+              onChange={(event) => setFilterGroup(event.target.value)}
+              className="min-h-[56px] rounded-2xl border border-[#D7EAE6] bg-white px-5 text-base text-ink outline-none transition focus:border-teal"
+            >
+              <option value="">Todos os grupos</option>
+              {groups.map((group) => (
+                <option key={group} value={group}>
+                  {group}
+                </option>
+              ))}
+            </select>
+
+            <button
+              type="submit"
+              className="inline-flex min-h-[56px] items-center justify-center rounded-2xl bg-gradient-to-r from-wine via-clay to-amber px-6 py-4 text-lg font-bold text-white shadow-card transition hover:brightness-105"
+            >
+              Filtrar
+            </button>
+          </form>
+        </div>
+      </section>
+
+      {error ? (
+        <section className="mt-5 rounded-[1.6rem] border border-[#EAB8B8] bg-[#FFF1F1] px-5 py-4 text-center text-sm font-medium text-[#B54747] shadow-card">
+          {error}
+        </section>
+      ) : null}
+
+      {!error && message ? (
+        <section className="mt-5 rounded-[1.6rem] border border-[#D7EAE6] bg-white px-5 py-5 text-center text-base text-ink shadow-card">
+          <div className="flex flex-col items-center justify-center gap-4 md:flex-row md:justify-between">
+            <p>{message}</p>
+            {!matches.length ? (
+              <a
+                href="/api/calendar"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-[52px] items-center justify-center rounded-2xl border border-teal/20 bg-white px-5 py-3 text-center text-sm font-semibold text-teal shadow-card transition hover:bg-teal/5"
+              >
+                Veja o Calendário completo da Copa
+              </a>
+            ) : null}
           </div>
-          <input
-            type={dateInputType}
-            value={filterDate}
-            onChange={(event) => setFilterDate(event.target.value)}
-            onFocus={() => setDateInputType("date")}
-            onBlur={() => {
-              if (!filterDate) {
-                setDateInputType("text");
-              }
-            }}
-            placeholder="dd/mm/aaaa"
-            aria-label="Filtrar jogos por data"
-            className="min-w-0 w-full rounded-2xl border border-ink/10 bg-field px-4 py-3"
-          />
-          <select
-            value={filterGroup}
-            onChange={(event) => setFilterGroup(event.target.value)}
-            className="min-w-0 w-full rounded-2xl border border-ink/10 bg-field px-4 py-3"
-          >
-            <option value="">Todos os grupos</option>
-            {groups.map((group) => (
-              <option key={group} value={group}>
-                {group}
-              </option>
-            ))}
-          </select>
-          <PrimaryButton type="submit" className="w-full md:w-auto" disabled={loading}>
-            Filtrar
-          </PrimaryButton>
-        </form>
+        </section>
+      ) : null}
 
-        {message && matches.length ? <StateMessage>{message}</StateMessage> : null}
-        {error ? <p className="rounded-2xl bg-wine/10 p-4 text-sm font-bold text-wine">{error}</p> : null}
-
-        {!matches.length ? (
-          <div className="rounded-3xl border border-teal/20 bg-white/80 p-5 text-sm leading-relaxed text-ink shadow-card backdrop-blur">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <p>{message || publicCopy.bets.noTodayMatches}</p>
-              {!filtersApplied ? (
-                <Link
-                  href="/api/calendar"
-                  target="_blank"
-                  className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-gradient-to-r from-wine via-clay to-amber px-5 py-3 text-center text-sm font-bold text-white shadow-card transition hover:brightness-110 md:shrink-0"
-                >
-                  Veja o CalendÃ¡rio completo da Copa
-                </Link>
-              ) : null}
-            </div>
-          </div>
-        ) : null}
-
-        {allTodayAlreadyBet && !filtersApplied ? <StateMessage>{stateMessages.allDone}</StateMessage> : null}
-
-        <form onSubmit={onSubmit} className="space-y-4">
+      {matches.length ? (
+        <form className="mt-5 space-y-4" onSubmit={handleSubmit}>
           {matches.map((match) => {
-            const statusPresentation = getStatusPresentation(match.status);
-            const disabled = statusPresentation.disabled;
+            const current = scores[match.id] ?? { home: EMPTY_SCORE, away: EMPTY_SCORE };
+            const readOnly = match.status !== "available";
 
             return (
               <article
                 key={match.id}
-                className="overflow-hidden rounded-[1.75rem] border border-white/70 bg-white/90 p-5 shadow-card"
+                className="rounded-[2rem] border border-[#D7EAE6] bg-white px-4 py-5 shadow-card sm:px-6 sm:py-6"
               >
-                <div className="mb-4 h-1.5 w-24 rounded-full bg-gradient-to-r from-wine via-amber to-teal" />
-                <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-                  <span className="rounded-full bg-teal/12 px-3 py-1 font-bold text-teal">{match.groupName}</span>
-                  {match.timezoneDisplay ? (
-                    <div className="text-right text-xs font-bold leading-relaxed text-ink/70 sm:text-sm">
-                      <p>{match.timezoneDisplay.localLabel}</p>
-                      <p>{match.timezoneDisplay.brasiliaLabel}</p>
-                    </div>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <div className="h-1 w-24 rounded-full bg-gradient-to-r from-wine via-amber to-teal" />
+                    <p className="mt-4 text-base font-semibold text-teal">{match.groupName}</p>
+                  </div>
+                  <div className="text-right text-sm font-semibold text-ink/75">
+                    {match.timezoneDisplay ? (
+                      <div className="space-y-1">
+                        <p>{match.timezoneDisplay.localLabel}</p>
+                        <p>{match.timezoneDisplay.brasiliaLabel}</p>
+                      </div>
+                    ) : (
+                      <p>
+                        {formatDate(match.matchDate)} às {match.matchTime}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <h2 className="mt-5 text-center text-[clamp(1.5rem,4vw,2rem)] font-semibold text-ink">
+                  {match.homeTeam} <span className="mx-2 text-clay">x</span> {match.awayTeam}
+                </h2>
+
+                <div className="mt-5 grid gap-3 md:grid-cols-[1fr_auto_1fr] md:items-center">
+                  <input
+                    type="number"
+                    min="0"
+                    inputMode="numeric"
+                    value={current.home}
+                    onChange={(event) => handleScoreChange(match.id, "home", event.target.value)}
+                    readOnly={readOnly}
+                    aria-label={`Placar de ${match.homeTeam}`}
+                    className="min-h-[54px] rounded-2xl border border-[#D7EAE6] bg-[#FCF7EC] px-5 text-center text-lg font-semibold text-ink outline-none transition focus:border-teal read-only:cursor-not-allowed read-only:bg-white"
+                  />
+                  <span className="text-center text-lg font-semibold text-clay">x</span>
+                  <input
+                    type="number"
+                    min="0"
+                    inputMode="numeric"
+                    value={current.away}
+                    onChange={(event) => handleScoreChange(match.id, "away", event.target.value)}
+                    readOnly={readOnly}
+                    aria-label={`Placar de ${match.awayTeam}`}
+                    className="min-h-[54px] rounded-2xl border border-[#D7EAE6] bg-[#FCF7EC] px-5 text-center text-lg font-semibold text-ink outline-none transition focus:border-teal read-only:cursor-not-allowed read-only:bg-white"
+                  />
+                </div>
+
+                <div className="mt-4 rounded-2xl border border-[#D7EAE6] bg-white px-5 py-4 text-center text-base font-semibold shadow-[inset_0_0_0_1px_rgba(215,234,230,0.35)]">
+                  {match.status === "available" ? (
+                    <span className="text-teal">Palpite aberto</span>
+                  ) : match.status === "already_bet" ? (
+                    <span className="text-[#D85C45]">Palpite já enviado</span>
                   ) : (
-                    <span className="font-bold text-ink/70">
-                      {formatDate(match.matchDate)} Ã s {match.matchTime}
-                    </span>
+                    <span className="text-[#D1495B]">Palpite fechado</span>
                   )}
                 </div>
-                <div className="mt-5 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-                  <strong className="text-right text-lg">{match.homeTeam}</strong>
-                  <span className="text-xl font-bold text-amber">x</span>
-                  <strong className="text-lg">{match.awayTeam}</strong>
-                </div>
-                <div className="mt-5 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-                  <input
-                    disabled={disabled}
-                    value={disabled ? match.existingBet?.homeScoreGuess ?? "" : scores[match.id]?.home ?? ""}
-                    onChange={(event) =>
-                      setScores((current) => ({
-                        ...current,
-                        [match.id]: { ...current[match.id], home: event.target.value }
-                      }))
-                    }
-                    min={0}
-                    max={99}
-                    inputMode="numeric"
-                    type="number"
-                    className="h-16 w-full rounded-2xl border border-teal/20 bg-field text-center text-3xl font-bold outline-none ring-teal/30 focus:ring-4 disabled:opacity-60"
-                    aria-label={`Placar ${match.homeTeam}`}
-                  />
-                  <span className="font-bold text-amber">x</span>
-                  <input
-                    disabled={disabled}
-                    value={disabled ? match.existingBet?.awayScoreGuess ?? "" : scores[match.id]?.away ?? ""}
-                    onChange={(event) =>
-                      setScores((current) => ({
-                        ...current,
-                        [match.id]: { ...current[match.id], away: event.target.value }
-                      }))
-                    }
-                    min={0}
-                    max={99}
-                    inputMode="numeric"
-                    type="number"
-                    className="h-16 w-full rounded-2xl border border-teal/20 bg-field text-center text-3xl font-bold outline-none ring-teal/30 focus:ring-4 disabled:opacity-60"
-                    aria-label={`Placar ${match.awayTeam}`}
-                  />
-                </div>
-                <p className={`mt-4 rounded-2xl px-4 py-3 text-center text-sm font-bold ${statusPresentation.className}`}>
-                  {statusPresentation.label}
-                </p>
+
                 {match.timezoneNotice ? (
-                  <p className="mt-3 rounded-2xl border border-teal/12 bg-teal/8 px-4 py-3 text-center text-xs leading-relaxed text-ink/70">
+                  <p className="mt-4 rounded-2xl border border-[#E7DABF] bg-[#FFF9EF] px-5 py-4 text-center text-sm leading-relaxed text-ink/72">
                     {match.timezoneNotice}
                   </p>
                 ) : null}
@@ -646,14 +738,27 @@ export function ApostasClient() {
             );
           })}
 
-          {availableCount ? (
-            <PrimaryButton type="submit" disabled={submitting} className="w-full">
-              {submitting ? publicCopy.bets.submitLoading : publicCopy.bets.submit}
-            </PrimaryButton>
+          {availableMatches.length ? (
+            <div className="flex justify-center">
+              <button
+                type="submit"
+                disabled={submitting}
+                className="inline-flex min-h-[58px] min-w-[240px] items-center justify-center rounded-2xl bg-gradient-to-r from-wine via-clay to-amber px-8 py-4 text-lg font-bold text-white shadow-card transition hover:brightness-105 disabled:cursor-wait disabled:opacity-80"
+              >
+                {submitting ? publicCopy.bets.submitLoading : publicCopy.bets.submit}
+              </button>
+            </div>
           ) : null}
         </form>
-      </section>
+      ) : null}
+
+      {!matches.length && !message ? (
+        <section className="mt-5 rounded-[1.6rem] border border-[#D7EAE6] bg-white px-5 py-5 text-center text-base text-ink shadow-card">
+          {allVisibleMatchesAlreadyBet ? publicCopy.bets.allDone : publicCopy.bets.noTodayMatches}
+        </section>
+      ) : null}
+
+      <PublicFooterLinks />
     </>
   );
 }
-

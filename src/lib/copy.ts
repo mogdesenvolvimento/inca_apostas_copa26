@@ -62,7 +62,8 @@ export const publicCopy = {
     allDone: "Você já mandou teus palpites.",
     confirmation: "Depois de confirmar, não dá mais pra alterar teus palpites.",
     logout: "Sair",
-    logoutConfirm: "Deseja sair da sua participação?"
+    logoutConfirm: "Deseja sair da sua participação?",
+    noRankingYet: "Sua classificação ainda não está disponível nesta rodada."
   },
   success: {
     badge: "PALPITES ENVIADOS",
