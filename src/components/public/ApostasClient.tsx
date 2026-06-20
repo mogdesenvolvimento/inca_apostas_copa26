@@ -37,7 +37,8 @@ type MatchItem = {
 };
 
 type ClassificationSummary = {
-  position: number;
+  position: number | null;
+  inRanking: boolean;
   correctCount: number;
   top3Distance: number;
   leaderDistance: number;
@@ -209,6 +210,10 @@ export function ApostasClient() {
       return "";
     }
 
+    if (!classificationSummary.inRanking) {
+      return formatMissingAccertos(classificationSummary.top3Distance);
+    }
+
     if (classificationSummary.position <= 3) {
       return "Você já está no Top 3";
     }
@@ -221,6 +226,10 @@ export function ApostasClient() {
       return "";
     }
 
+    if (!classificationSummary.inRanking) {
+      return formatMissingAccertos(classificationSummary.leaderDistance);
+    }
+
     if (classificationSummary.position === 1) {
       return classificationSummary.leaderCount > 1 ? "Empatado na liderança" : "Você é o líder atual";
     }
@@ -231,6 +240,12 @@ export function ApostasClient() {
   const classificationStatusText = useMemo(() => {
     if (!classificationSummary) {
       return "";
+    }
+
+    if (!classificationSummary.inRanking) {
+      return `📉 Você ainda está fora do ranking atual. ${formatMissingAccertos(
+        classificationSummary.top3Distance
+      )} para entrar no Top 3.`;
     }
 
     if (classificationSummary.position === 1) {
@@ -380,8 +395,8 @@ export function ApostasClient() {
             className="w-[92vw] max-w-md rounded-[1.75rem] border border-[#ead7b7] bg-[#f7ead6] p-5 shadow-[0_18px_45px_rgba(31,42,55,0.18)] sm:p-6"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="flex items-start justify-between gap-4">
-              <div>
+            <div className="relative flex min-h-10 items-center justify-center">
+              <div className="text-center">
                 <h2 className="font-heading text-2xl font-bold text-ink">🏆 Minha Classificação</h2>
                 <p className="mt-1 text-sm text-ink/60">Desempenho atual na rodada</p>
               </div>
@@ -390,7 +405,7 @@ export function ApostasClient() {
                 type="button"
                 onClick={closeClassificationModal}
                 aria-label="Fechar modal de classificação"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-ink/10 bg-white text-lg font-bold text-ink/70 shadow-sm transition hover:bg-white/90"
+                className="absolute right-0 top-0 inline-flex h-10 w-10 items-center justify-center rounded-full border border-ink/10 bg-white text-lg font-bold text-ink/70 shadow-sm transition hover:bg-white/90"
               >
                 ×
               </button>
@@ -400,7 +415,7 @@ export function ApostasClient() {
               <div className="mt-5 space-y-4 text-center">
                 <div className="rounded-[1.5rem] bg-white px-5 py-5 shadow-sm">
                   <p className="font-heading text-[clamp(32px,7vw,42px)] font-bold leading-none text-ink">
-                    #{classificationSummary.position}º Lugar
+                    {classificationSummary.inRanking ? `#${classificationSummary.position}º Lugar` : "Fora do ranking"}
                   </p>
                 </div>
 

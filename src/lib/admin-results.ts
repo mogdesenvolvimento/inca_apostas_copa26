@@ -51,7 +51,8 @@ export type ParticipantRankingItem = {
 };
 
 export type ParticipantClassificationSummary = {
-  position: number;
+  position: number | null;
+  inRanking: boolean;
   correctCount: number;
   top3Distance: number;
   leaderDistance: number;
@@ -169,16 +170,31 @@ export function getParticipantClassificationSummary(
   totalResultsCount: number
 ): ParticipantClassificationSummary | null {
   const participant = ranking.find((item) => item.participantId === participantId);
-
-  if (!participant) {
-    return null;
-  }
-
   const leader = ranking[0];
   const leaderCount = leader ? ranking.filter((item) => item.position === 1).length : 0;
   const thirdPlace = ranking.find((item) => item.position === 3);
-  const targetCount = participant.position <= 3 ? participant.correctCount : (thirdPlace?.correctCount ?? leader?.correctCount ?? 0);
   const leaderCorrectCount = leader?.correctCount ?? 0;
+
+  if (!participant) {
+    if (totalResultsCount <= 0) {
+      return null;
+    }
+
+    const fallbackTop3Count = thirdPlace?.correctCount ?? ranking[ranking.length - 1]?.correctCount ?? 1;
+
+    return {
+      position: null,
+      inRanking: false,
+      correctCount: 0,
+      top3Distance: Math.max(1, fallbackTop3Count),
+      leaderDistance: Math.max(1, leaderCorrectCount),
+      progressPercent: 0,
+      totalResultsCount,
+      leaderCount
+    };
+  }
+
+  const targetCount = participant.position <= 3 ? participant.correctCount : (thirdPlace?.correctCount ?? leader?.correctCount ?? 0);
 
   const top3Distance = Math.max(0, targetCount - participant.correctCount);
   const leaderDistance = Math.max(0, leaderCorrectCount - participant.correctCount);
@@ -188,6 +204,7 @@ export function getParticipantClassificationSummary(
 
   return {
     position: participant.position,
+    inRanking: true,
     correctCount: participant.correctCount,
     top3Distance,
     leaderDistance,

@@ -558,6 +558,7 @@ describe("admin results", () => {
 
     expect(getParticipantClassificationSummary(ranking, "p3", 4)).toEqual({
       position: 3,
+      inRanking: true,
       correctCount: 1,
       top3Distance: 0,
       leaderDistance: 2,
@@ -566,6 +567,15 @@ describe("admin results", () => {
       leaderCount: 1
     });
 
-    expect(getParticipantClassificationSummary(ranking, "missing", 4)).toBeNull();
+    expect(getParticipantClassificationSummary(ranking, "missing", 4)).toEqual({
+      position: null,
+      inRanking: false,
+      correctCount: 0,
+      top3Distance: 1,
+      leaderDistance: 3,
+      progressPercent: 0,
+      totalResultsCount: 4,
+      leaderCount: 1
+    });
   });
 });
