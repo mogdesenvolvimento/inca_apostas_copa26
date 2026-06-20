@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -193,7 +193,7 @@ export function ApostasClient() {
           setClassificationAvailable(false);
         }
       } catch {
-        setError("Não deu pra carregar os dados da tua rodada. Tenta de novo.");
+        setError("NÃ£o deu pra carregar os dados da tua rodada. Tenta de novo.");
       } finally {
         setLoading(false);
       }
@@ -214,8 +214,8 @@ export function ApostasClient() {
       return formatMissingAccertos(classificationSummary.top3Distance);
     }
 
-    if (classificationSummary.position <= 3) {
-      return "Você já está no Top 3";
+    if ((classificationSummary.position ?? Number.POSITIVE_INFINITY) <= 3) {
+      return "VocÃª jÃ¡ estÃ¡ no Top 3";
     }
 
     return formatMissingAccertos(classificationSummary.top3Distance);
@@ -230,8 +230,8 @@ export function ApostasClient() {
       return formatMissingAccertos(classificationSummary.leaderDistance);
     }
 
-    if (classificationSummary.position === 1) {
-      return classificationSummary.leaderCount > 1 ? "Empatado na liderança" : "Você é o líder atual";
+    if ((classificationSummary.position ?? Number.POSITIVE_INFINITY) === 1) {
+      return classificationSummary.leaderCount > 1 ? "Empatado na lideranÃ§a" : "VocÃª Ã© o lÃ­der atual";
     }
 
     return formatMissingAccertos(classificationSummary.leaderDistance);
@@ -243,20 +243,20 @@ export function ApostasClient() {
     }
 
     if (!classificationSummary.inRanking) {
-      return `📉 Você ainda está fora do ranking atual. ${formatMissingAccertos(
+      return `ðŸ“‰ VocÃª ainda estÃ¡ fora do ranking atual. ${formatMissingAccertos(
         classificationSummary.top3Distance
       )} para entrar no Top 3.`;
     }
 
-    if (classificationSummary.position === 1) {
-      return "👑 Você está liderando o ranking atual.";
+    if ((classificationSummary.position ?? Number.POSITIVE_INFINITY) === 1) {
+      return "ðŸ‘‘ VocÃª estÃ¡ liderando o ranking atual.";
     }
 
-    if (classificationSummary.position <= 3) {
-      return "🚀 Você está entre os melhores participantes.";
+    if ((classificationSummary.position ?? Number.POSITIVE_INFINITY) <= 3) {
+      return "ðŸš€ VocÃª estÃ¡ entre os melhores participantes.";
     }
 
-    return `📈 ${formatMissingAccertos(classificationSummary.top3Distance)} para entrar no Top 3.`;
+    return `ðŸ“ˆ ${formatMissingAccertos(classificationSummary.top3Distance)} para entrar no Top 3.`;
   }, [classificationSummary]);
 
   function closeAwardsModal() {
@@ -320,7 +320,7 @@ export function ApostasClient() {
     }
 
     if (!response.ok) {
-      setError(data.error ?? "Não deu pra registrar teus palpites.");
+      setError(data.error ?? "NÃ£o deu pra registrar teus palpites.");
       return;
     }
 
@@ -352,21 +352,21 @@ export function ApostasClient() {
           <div
             role="dialog"
             aria-modal="true"
-            aria-label="Premiações da semana"
+            aria-label="PremiaÃ§Ãµes da semana"
             className="max-h-[92vh] w-[92vw] max-w-3xl overflow-y-auto rounded-[2rem] border border-white/70 bg-white/95 p-4 shadow-card sm:p-6"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="px-2 text-center sm:px-4">
               <h2 className="font-heading text-3xl font-bold text-ink sm:text-4xl">Quem acerta mais, ganha!</h2>
               <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-ink/72 sm:text-base">
-                Faça seus palpites e concorra aos prêmios da fase.
+                FaÃ§a seus palpites e concorra aos prÃªmios da fase.
               </p>
             </div>
 
             <div className="mx-auto mt-5 w-full max-w-[520px] overflow-hidden rounded-[1.5rem]">
               <Image
                 src="/assets/awards-modal-2026-06-10.jpeg"
-                alt="Premiações da fase de grupos da Copa Inca"
+                alt="PremiaÃ§Ãµes da fase de grupos da Copa Inca"
                 width={1080}
                 height={1440}
                 priority
@@ -391,23 +391,23 @@ export function ApostasClient() {
           <div
             role="dialog"
             aria-modal="true"
-            aria-label="Minha Classificação"
+            aria-label="Minha ClassificaÃ§Ã£o"
             className="w-[92vw] max-w-md rounded-[1.75rem] border border-[#ead7b7] bg-[#f7ead6] p-5 shadow-[0_18px_45px_rgba(31,42,55,0.18)] sm:p-6"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="relative flex min-h-10 items-center justify-center">
               <div className="text-center">
-                <h2 className="font-heading text-2xl font-bold text-ink">🏆 Minha Classificação</h2>
+                <h2 className="font-heading text-2xl font-bold text-ink">ðŸ† Minha ClassificaÃ§Ã£o</h2>
                 <p className="mt-1 text-sm text-ink/60">Desempenho atual na rodada</p>
               </div>
               <button
                 ref={closeClassificationButtonRef}
                 type="button"
                 onClick={closeClassificationModal}
-                aria-label="Fechar modal de classificação"
+                aria-label="Fechar modal de classificaÃ§Ã£o"
                 className="absolute right-0 top-0 inline-flex h-10 w-10 items-center justify-center rounded-full border border-ink/10 bg-white text-lg font-bold text-ink/70 shadow-sm transition hover:bg-white/90"
               >
-                ×
+                Ã—
               </button>
             </div>
 
@@ -415,30 +415,30 @@ export function ApostasClient() {
               <div className="mt-5 space-y-4 text-center">
                 <div className="rounded-[1.5rem] bg-white px-5 py-5 shadow-sm">
                   <p className="font-heading text-[clamp(32px,7vw,42px)] font-bold leading-none text-ink">
-                    {classificationSummary.inRanking ? `#${classificationSummary.position}º Lugar` : "Fora do ranking"}
+                    {classificationSummary.inRanking ? `#${classificationSummary.position}Âº Lugar` : "Fora do ranking"}
                   </p>
                 </div>
 
                 <div className="rounded-[1.5rem] bg-white px-5 py-4 shadow-sm">
                   <p className="text-lg font-bold text-ink">
-                    ✅ {classificationSummary.correctCount}{" "}
+                    âœ… {classificationSummary.correctCount}{" "}
                     {classificationSummary.correctCount === 1 ? "Acerto" : "Acertos"}
                   </p>
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="rounded-[1.5rem] bg-white px-4 py-4 shadow-sm">
-                    <p className="text-sm font-semibold text-ink/62">🥉 Para entrar no Top 3</p>
+                    <p className="text-sm font-semibold text-ink/62">ðŸ¥‰ Para entrar no Top 3</p>
                     <p className="mt-2 text-base font-bold text-ink">{classificationTop3Text}</p>
                   </div>
                   <div className="rounded-[1.5rem] bg-white px-4 py-4 shadow-sm">
-                    <p className="text-sm font-semibold text-ink/62">🥇 Para assumir a liderança</p>
+                    <p className="text-sm font-semibold text-ink/62">ðŸ¥‡ Para assumir a lideranÃ§a</p>
                     <p className="mt-2 text-base font-bold text-ink">{classificationLeaderText}</p>
                   </div>
                 </div>
 
                 <div className="rounded-[1.5rem] bg-white px-5 py-4 shadow-sm">
-                  <p className="text-sm font-semibold text-ink/62">📊 Desempenho da Rodada</p>
+                  <p className="text-sm font-semibold text-ink/62">ðŸ“Š Desempenho da Rodada</p>
                   <p className="mt-2 text-sm text-ink/72">
                     {classificationSummary.correctCount} de {classificationSummary.totalResultsCount}{" "}
                     {classificationSummary.totalResultsCount === 1 ? "resultado acertado" : "resultados acertados"}
@@ -458,7 +458,7 @@ export function ApostasClient() {
               </div>
             ) : (
               <div className="mt-5 rounded-[1.5rem] bg-white px-5 py-6 text-center text-sm leading-relaxed text-ink/72 shadow-sm">
-                Sua classificação ainda não está disponível nesta rodada.
+                Sua classificaÃ§Ã£o ainda nÃ£o estÃ¡ disponÃ­vel nesta rodada.
               </div>
             )}
           </div>
@@ -475,7 +475,7 @@ export function ApostasClient() {
               <h1 className="mt-3 font-heading text-3xl font-bold text-ink">{publicCopy.bets.title}</h1>
               <p className="mt-3 max-w-2xl text-sm text-ink/70">{publicCopy.bets.subtitle}</p>
               <p className="mt-2 max-w-2xl text-[0.92rem] font-medium leading-relaxed text-[#b35b5b]">
-                Apostas nos placares ficam liberadas até 10 minutos antes do início de cada jogo.
+                Apostas nos placares ficam liberadas atÃ© 10 minutos antes do inÃ­cio de cada jogo.
               </p>
               <div className="mt-4 flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap">
                 <a
@@ -491,7 +491,7 @@ export function ApostasClient() {
                   onClick={() => setShowClassificationModal(true)}
                   className="w-full sm:w-auto lg:hidden"
                 >
-                  🏆 Ver Minha Classificação
+                  ðŸ† Ver Minha ClassificaÃ§Ã£o
                 </PrimaryButton>
               </div>
             </div>
@@ -503,7 +503,7 @@ export function ApostasClient() {
                 onClick={() => setShowClassificationModal(true)}
                 className="hidden w-full max-w-[260px] self-end lg:inline-flex"
               >
-                🏆 Ver Minha Classificação
+                ðŸ† Ver Minha ClassificaÃ§Ã£o
               </PrimaryButton>
             </div>
           </div>
@@ -561,7 +561,7 @@ export function ApostasClient() {
                   target="_blank"
                   className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-gradient-to-r from-wine via-clay to-amber px-5 py-3 text-center text-sm font-bold text-white shadow-card transition hover:brightness-110 md:shrink-0"
                 >
-                  Veja o Calendário completo da Copa
+                  Veja o CalendÃ¡rio completo da Copa
                 </Link>
               ) : null}
             </div>
@@ -590,7 +590,7 @@ export function ApostasClient() {
                     </div>
                   ) : (
                     <span className="font-bold text-ink/70">
-                      {formatDate(match.matchDate)} às {match.matchTime}
+                      {formatDate(match.matchDate)} Ã s {match.matchTime}
                     </span>
                   )}
                 </div>
@@ -656,3 +656,4 @@ export function ApostasClient() {
     </>
   );
 }
+
