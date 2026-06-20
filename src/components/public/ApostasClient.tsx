@@ -4,7 +4,6 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ParticipantLogoutButton } from "@/components/public/ParticipantLogoutButton";
-import { PublicFooterLinks } from "@/components/public/PublicFooterLinks";
 import { publicCopy } from "@/lib/copy";
 
 type ParticipantResponse = {
@@ -223,10 +222,7 @@ export function ApostasClient() {
     };
   }, [showAwardsModal, showClassificationModal]);
 
-  const availableMatches = useMemo(
-    () => matches.filter((match) => match.status === "available"),
-    [matches]
-  );
+  const availableMatches = useMemo(() => matches.filter((match) => match.status === "available"), [matches]);
 
   const allVisibleMatchesAlreadyBet = useMemo(
     () => matches.length > 0 && matches.every((match) => match.status === "already_bet"),
@@ -423,21 +419,16 @@ export function ApostasClient() {
             </button>
 
             <div className="pr-12 text-center">
-              <div className="inline-flex items-center justify-center gap-2">
-                <span aria-hidden="true" className="text-xl leading-none">
-                  🏆
-                </span>
-                <h2 className="font-heading text-[clamp(1.7rem,4vw,2.4rem)] font-bold text-ink">
-                  Quem acerta mais, ganha!
-                </h2>
-              </div>
+              <h2 className="font-heading text-[clamp(1.7rem,4vw,2.4rem)] font-bold text-ink">
+                Quem acerta mais, ganha!
+              </h2>
               <p className="mt-2 text-sm text-ink/70 sm:text-base">
                 Faça seus palpites e concorra aos prêmios da fase.
               </p>
             </div>
 
             <Image
-              src="/assets/premiacao-fase-de-grupos.jpeg"
+              src="/assets/awards-modal-2026-06-10.jpeg"
               alt="Premiações da fase de grupos da Copa Inca"
               width={1080}
               height={1350}
@@ -757,8 +748,6 @@ export function ApostasClient() {
           {allVisibleMatchesAlreadyBet ? publicCopy.bets.allDone : publicCopy.bets.noTodayMatches}
         </section>
       ) : null}
-
-      <PublicFooterLinks />
     </>
   );
 }
