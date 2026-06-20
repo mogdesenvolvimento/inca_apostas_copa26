@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { StateMessage } from "@/components/StateMessage";
@@ -36,6 +36,16 @@ type MatchItem = {
   } | null;
 };
 
+type ClassificationSummary = {
+  position: number;
+  correctCount: number;
+  top3Distance: number;
+  leaderDistance: number;
+  progressPercent: number;
+  totalResultsCount: number;
+  leaderCount: number;
+};
+
 function formatDate(date: string) {
   const [year, month, day] = date.split("-");
   return `${day}/${month}/${year}`;
@@ -57,8 +67,17 @@ function getStatusPresentation(status: MatchStatus) {
   };
 }
 
+function formatMissingAccertos(value: number) {
+  if (value <= 0) {
+    return "";
+  }
+
+  return value === 1 ? "Falta 1 acerto" : `Faltam ${value} acertos`;
+}
+
 export function ApostasClient() {
   const router = useRouter();
+  const closeClassificationButtonRef = useRef<HTMLButtonElement | null>(null);
   const [participantName, setParticipantName] = useState("");
   const [matches, setMatches] = useState<MatchItem[]>([]);
   const [groups, setGroups] = useState<string[]>([]);
@@ -69,6 +88,9 @@ export function ApostasClient() {
   const [submitting, setSubmitting] = useState(false);
   const [authenticated, setAuthenticated] = useState(true);
   const [showAwardsModal, setShowAwardsModal] = useState(false);
+  const [showClassificationModal, setShowClassificationModal] = useState(false);
+  const [classificationSummary, setClassificationSummary] = useState<ClassificationSummary | null>(null);
+  const [classificationAvailable, setClassificationAvailable] = useState(false);
   const [filterDate, setFilterDate] = useState("");
   const [filterGroup, setFilterGroup] = useState("");
   const [filtersApplied, setFiltersApplied] = useState(false);
@@ -80,7 +102,30 @@ export function ApostasClient() {
   }, []);
 
   useEffect(() => {
-    if (!showAwardsModal) {
+    if (!showClassificationModal) {
+      return;
+    }
+
+    closeClassificationButtonRef.current?.focus();
+  }, [showClassificationModal]);
+
+  useEffect(() => {
+    if (!showClassificationModal) {
+      return;
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setShowClassificationModal(false);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showClassificationModal]);
+
+  useEffect(() => {
+    if (!showAwardsModal && !showClassificationModal) {
       return;
     }
 
@@ -90,7 +135,7 @@ export function ApostasClient() {
     return () => {
       document.body.style.overflow = previousOverflow;
     };
-  }, [showAwardsModal]);
+  }, [showAwardsModal, showClassificationModal]);
 
   useEffect(() => {
     async function loadData() {
@@ -116,25 +161,38 @@ export function ApostasClient() {
           query.set("group", appliedFilters.group);
         }
 
-        const matchesResponse = await fetch(`/api/matches${query.toString() ? `?${query.toString()}` : ""}`);
-        if (matchesResponse.status === 401) {
+        const [matchesResponse, rankingResponse] = await Promise.all([
+          fetch(`/api/matches${query.toString() ? `?${query.toString()}` : ""}`),
+          fetch("/api/participant/ranking")
+        ]);
+
+        if (matchesResponse.status === 401 || rankingResponse.status === 401) {
           setAuthenticated(false);
           router.replace("/login");
           return;
         }
 
-        const data = await matchesResponse.json();
-        setMatches(data.matches ?? []);
-        setGroups(data.groups ?? []);
-        setFiltersApplied(Boolean(data.filtered));
+        const matchesData = await matchesResponse.json();
+        setMatches(matchesData.matches ?? []);
+        setGroups(matchesData.groups ?? []);
+        setFiltersApplied(Boolean(matchesData.filtered));
 
-        if (!data.matches?.length) {
-          setMessage(data.message ?? publicCopy.bets.noTodayMatches);
+        if (!matchesData.matches?.length) {
+          setMessage(matchesData.message ?? publicCopy.bets.noTodayMatches);
         } else {
-          setMessage(data.message ?? "");
+          setMessage(matchesData.message ?? "");
+        }
+
+        if (rankingResponse.ok) {
+          const rankingData = await rankingResponse.json();
+          setClassificationSummary(rankingData.summary ?? null);
+          setClassificationAvailable(Boolean(rankingData.available && rankingData.summary));
+        } else {
+          setClassificationSummary(null);
+          setClassificationAvailable(false);
         }
       } catch {
-        setError("Não deu pra carregar os jogos do período. Tenta de novo.");
+        setError("Não deu pra carregar os dados da tua rodada. Tenta de novo.");
       } finally {
         setLoading(false);
       }
@@ -146,8 +204,52 @@ export function ApostasClient() {
   const availableCount = matches.filter((match) => match.status === "available").length;
   const allTodayAlreadyBet = matches.length > 0 && matches.every((match) => match.status === "already_bet");
 
+  const classificationTop3Text = useMemo(() => {
+    if (!classificationSummary) {
+      return "";
+    }
+
+    if (classificationSummary.position <= 3) {
+      return "Você já está no Top 3";
+    }
+
+    return formatMissingAccertos(classificationSummary.top3Distance);
+  }, [classificationSummary]);
+
+  const classificationLeaderText = useMemo(() => {
+    if (!classificationSummary) {
+      return "";
+    }
+
+    if (classificationSummary.position === 1) {
+      return classificationSummary.leaderCount > 1 ? "Empatado na liderança" : "Você é o líder atual";
+    }
+
+    return formatMissingAccertos(classificationSummary.leaderDistance);
+  }, [classificationSummary]);
+
+  const classificationStatusText = useMemo(() => {
+    if (!classificationSummary) {
+      return "";
+    }
+
+    if (classificationSummary.position === 1) {
+      return "👑 Você está liderando o ranking atual.";
+    }
+
+    if (classificationSummary.position <= 3) {
+      return "🚀 Você está entre os melhores participantes.";
+    }
+
+    return `📈 ${formatMissingAccertos(classificationSummary.top3Distance)} para entrar no Top 3.`;
+  }, [classificationSummary]);
+
   function closeAwardsModal() {
     setShowAwardsModal(false);
+  }
+
+  function closeClassificationModal() {
+    setShowClassificationModal(false);
   }
 
   function onFilterSubmit(event: FormEvent) {
@@ -266,6 +368,88 @@ export function ApostasClient() {
         </div>
       ) : null}
 
+      {showClassificationModal ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/58 px-4 py-6 backdrop-blur-[4px]"
+          onClick={closeClassificationModal}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Minha Classificação"
+            className="w-[92vw] max-w-md rounded-[1.75rem] border border-[#ead7b7] bg-[#f7ead6] p-5 shadow-[0_18px_45px_rgba(31,42,55,0.18)] sm:p-6"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="font-heading text-2xl font-bold text-ink">🏆 Minha Classificação</h2>
+                <p className="mt-1 text-sm text-ink/60">Desempenho atual na rodada</p>
+              </div>
+              <button
+                ref={closeClassificationButtonRef}
+                type="button"
+                onClick={closeClassificationModal}
+                aria-label="Fechar modal de classificação"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-ink/10 bg-white text-lg font-bold text-ink/70 shadow-sm transition hover:bg-white/90"
+              >
+                ×
+              </button>
+            </div>
+
+            {classificationAvailable && classificationSummary ? (
+              <div className="mt-5 space-y-4 text-center">
+                <div className="rounded-[1.5rem] bg-white px-5 py-5 shadow-sm">
+                  <p className="font-heading text-[clamp(32px,7vw,42px)] font-bold leading-none text-ink">
+                    #{classificationSummary.position}º Lugar
+                  </p>
+                </div>
+
+                <div className="rounded-[1.5rem] bg-white px-5 py-4 shadow-sm">
+                  <p className="text-lg font-bold text-ink">
+                    ✅ {classificationSummary.correctCount}{" "}
+                    {classificationSummary.correctCount === 1 ? "Acerto" : "Acertos"}
+                  </p>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-[1.5rem] bg-white px-4 py-4 shadow-sm">
+                    <p className="text-sm font-semibold text-ink/62">🥉 Para entrar no Top 3</p>
+                    <p className="mt-2 text-base font-bold text-ink">{classificationTop3Text}</p>
+                  </div>
+                  <div className="rounded-[1.5rem] bg-white px-4 py-4 shadow-sm">
+                    <p className="text-sm font-semibold text-ink/62">🥇 Para assumir a liderança</p>
+                    <p className="mt-2 text-base font-bold text-ink">{classificationLeaderText}</p>
+                  </div>
+                </div>
+
+                <div className="rounded-[1.5rem] bg-white px-5 py-4 shadow-sm">
+                  <p className="text-sm font-semibold text-ink/62">📊 Desempenho da Rodada</p>
+                  <p className="mt-2 text-sm text-ink/72">
+                    {classificationSummary.correctCount} de {classificationSummary.totalResultsCount}{" "}
+                    {classificationSummary.totalResultsCount === 1 ? "resultado acertado" : "resultados acertados"}
+                  </p>
+                  <div className="mt-4 h-3 overflow-hidden rounded-full bg-page/95">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-wine via-clay to-amber transition-[width]"
+                      style={{ width: `${classificationSummary.progressPercent}%` }}
+                    />
+                  </div>
+                  <p className="mt-3 text-sm font-bold text-ink/72">{classificationSummary.progressPercent}%</p>
+                </div>
+
+                <div className="rounded-[1.5rem] bg-white px-5 py-4 shadow-sm">
+                  <p className="text-sm font-semibold leading-relaxed text-ink">{classificationStatusText}</p>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-5 rounded-[1.5rem] bg-white px-5 py-6 text-center text-sm leading-relaxed text-ink/72 shadow-sm">
+                Sua classificação ainda não está disponível nesta rodada.
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
+
       <section className="space-y-5">
         <div className="rounded-[2rem] border border-white/70 bg-white/86 p-6 shadow-card">
           <div className="flex items-start justify-between gap-4">
@@ -278,18 +462,34 @@ export function ApostasClient() {
               <p className="mt-2 max-w-2xl text-[0.92rem] font-medium leading-relaxed text-[#b35b5b]">
                 Apostas nos placares ficam liberadas até 10 minutos antes do início de cada jogo.
               </p>
-              <a
-                href="https://www.fifa.com/pt/tournaments/mens/worldcup/canadamexicousa2026/articles/copa-mundo-2026-tabela-jogos"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-2xl border border-teal/18 bg-white/82 px-6 py-3 text-center text-sm font-bold text-teal shadow-card transition hover:bg-teal/5 sm:w-auto"
-              >
-                Veja tabela oficial da FIFA
-              </a>
+              <div className="mt-4 flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap">
+                <a
+                  href="https://www.fifa.com/pt/tournaments/mens/worldcup/canadamexicousa2026/articles/copa-mundo-2026-tabela-jogos"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-11 w-full items-center justify-center rounded-2xl border border-teal/18 bg-white/82 px-6 py-3 text-center text-sm font-bold text-teal shadow-card transition hover:bg-teal/5 sm:w-auto"
+                >
+                  Veja tabela oficial da FIFA
+                </a>
+                <PrimaryButton
+                  type="button"
+                  onClick={() => setShowClassificationModal(true)}
+                  className="w-full sm:w-auto lg:hidden"
+                >
+                  🏆 Ver Minha Classificação
+                </PrimaryButton>
+              </div>
             </div>
             <div className="flex flex-col items-end gap-3">
               <ParticipantLogoutButton className="hidden sm:inline-flex" />
               <IncaLogo variant="hero" className="hidden sm:flex" priority />
+              <PrimaryButton
+                type="button"
+                onClick={() => setShowClassificationModal(true)}
+                className="hidden w-full max-w-[260px] self-end lg:inline-flex"
+              >
+                🏆 Ver Minha Classificação
+              </PrimaryButton>
             </div>
           </div>
           <ParticipantLogoutButton className="mt-4 sm:hidden" />

@@ -50,6 +50,16 @@ export type ParticipantRankingItem = {
   correctCount: number;
 };
 
+export type ParticipantClassificationSummary = {
+  position: number;
+  correctCount: number;
+  top3Distance: number;
+  leaderDistance: number;
+  progressPercent: number;
+  totalResultsCount: number;
+  leaderCount: number;
+};
+
 export function hasOfficialResult(match: Pick<MatchResultSummary, "officialScoreHome" | "officialScoreAway">) {
   return match.officialScoreHome !== null && match.officialScoreAway !== null;
 }
@@ -151,4 +161,38 @@ export function getPodium(ranking: ParticipantRankingItem[]) {
     position,
     participants: podium.get(position) ?? []
   }));
+}
+
+export function getParticipantClassificationSummary(
+  ranking: ParticipantRankingItem[],
+  participantId: string,
+  totalResultsCount: number
+): ParticipantClassificationSummary | null {
+  const participant = ranking.find((item) => item.participantId === participantId);
+
+  if (!participant) {
+    return null;
+  }
+
+  const leader = ranking[0];
+  const leaderCount = leader ? ranking.filter((item) => item.position === 1).length : 0;
+  const thirdPlace = ranking.find((item) => item.position === 3);
+  const targetCount = participant.position <= 3 ? participant.correctCount : (thirdPlace?.correctCount ?? leader?.correctCount ?? 0);
+  const leaderCorrectCount = leader?.correctCount ?? 0;
+
+  const top3Distance = Math.max(0, targetCount - participant.correctCount);
+  const leaderDistance = Math.max(0, leaderCorrectCount - participant.correctCount);
+  const progressBase = totalResultsCount || participant.correctCount;
+  const progressPercent =
+    progressBase > 0 ? Math.max(0, Math.min(100, Math.round((participant.correctCount / progressBase) * 100))) : 0;
+
+  return {
+    position: participant.position,
+    correctCount: participant.correctCount,
+    top3Distance,
+    leaderDistance,
+    progressPercent,
+    totalResultsCount,
+    leaderCount
+  };
 }
