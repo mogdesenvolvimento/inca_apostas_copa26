@@ -19,6 +19,7 @@ import { getSaoPauloDateString } from "@/lib/timezone";
 
 type DashboardSection = {
   id: string;
+  stageLabel?: string;
   title: string;
   description: string;
   emptyMessage: string;
@@ -80,31 +81,30 @@ export default async function AdminDashboardPage() {
     }, [])
     .sort((stageA, stageB) => getStageOrder(stageA) - getStageOrder(stageB))
     .map((stage) => {
+      const stageLabel = getStageLabel(stage);
       const stageMatches = competitiveMatches.filter((match) => (match.stage ?? "group") === stage);
       const matchesWithResults = stageMatches.filter((match) => hasOfficialResult(match));
       const ranking = buildParticipantRanking(matchesWithResults);
 
       return {
         id: stage,
-        title: `Principais acertadores da fase ${getStageLabel(stage)}`,
-        description: `Apuração consolidada dos palpites com base apenas nos resultados oficiais da fase ${getStageLabel(stage)}.`,
-        emptyMessage: `Ainda não há jogos com resultado oficial cadastrado na fase ${getStageLabel(stage)}.`,
+        stageLabel,
+        title: `Principais acertadores da ${stageLabel}`,
+        description: `Apuração consolidada dos palpites com base apenas nos resultados oficiais da ${stageLabel}.`,
+        emptyMessage: `Ainda não há jogos com resultado oficial cadastrado na ${stageLabel}.`,
         podium: getPodium(ranking),
         ranking
       };
     });
 
-  const rankingSections: DashboardSection[] = [
-    {
-      id: "overall",
-      title: "Principais acertadores no geral",
-      description: "Somatório de acertos considerando todas as fases com resultados oficiais já lançados.",
-      emptyMessage: "Ainda não há jogos com resultado oficial cadastrado para o ranking geral.",
-      podium: overallPodium,
-      ranking: overallRanking
-    },
-    ...stageSections
-  ];
+  const overallSection: DashboardSection = {
+    id: "overall",
+    title: "Principais acertadores no geral",
+    description: "Somatório de acertos considerando todas as fases com resultados oficiais já lançados.",
+    emptyMessage: "Ainda não há jogos com resultado oficial cadastrado para o ranking geral.",
+    podium: overallPodium,
+    ranking: overallRanking
+  };
 
   return (
     <div className="min-h-screen">
@@ -126,16 +126,51 @@ export default async function AdminDashboardPage() {
             <Metric label="Acertadores únicos" value={currentStageRanking.length} />
           </div>
 
-          {rankingSections.map((section) => (
-            <RankingSection
-              key={section.id}
-              title={section.title}
-              description={section.description}
-              podium={section.podium}
-              ranking={section.ranking}
-              emptyMessage={section.emptyMessage}
-            />
-          ))}
+          <RankingSection
+            title={overallSection.title}
+            description={overallSection.description}
+            podium={overallSection.podium}
+            ranking={overallSection.ranking}
+            emptyMessage={overallSection.emptyMessage}
+          />
+
+          <div className="rounded-[1.75rem] bg-white/85 p-5 shadow-card">
+            <h2 className="font-heading text-2xl font-bold text-ink">Principais acertadores por fase</h2>
+            <p className="mt-2 text-sm text-ink/65">
+              Abra cada fase para consultar pódio e ranking detalhado dos acertadores de cada etapa.
+            </p>
+
+            <div className="mt-5 space-y-4">
+              {stageSections.map((section, index) => (
+                <details
+                  key={section.id}
+                  className="group overflow-hidden rounded-[1.5rem] border border-ink/10 bg-field"
+                  open={index === 0}
+                >
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 marker:hidden">
+                    <div>
+                      <p className="text-sm font-bold uppercase tracking-[0.16em] text-leaf">
+                        {section.stageLabel}
+                      </p>
+                      <p className="mt-1 text-sm text-ink/65">{section.description}</p>
+                    </div>
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-ink/10 bg-white text-xl font-bold text-ink transition group-open:rotate-45">
+                      +
+                    </span>
+                  </summary>
+
+                  <div className="border-t border-ink/10 bg-white/70 px-5 py-5">
+                    <RankingSectionBody
+                      podium={section.podium}
+                      ranking={section.ranking}
+                      emptyMessage={section.emptyMessage}
+                      titleKey={section.id}
+                    />
+                  </div>
+                </details>
+              ))}
+            </div>
+          </div>
 
           <div className="rounded-[1.75rem] bg-white/85 p-5 shadow-card">
             <h2 className="font-heading text-2xl font-bold text-ink">{adminCopy.dashboard.todayMatchesTitle}</h2>
@@ -199,33 +234,51 @@ function RankingSection({
   emptyMessage: string;
 }) {
   return (
-    <div className="space-y-6">
-      <div className="rounded-[1.75rem] bg-white/85 p-5 shadow-card">
+    <div className="space-y-6 rounded-[1.75rem] bg-white/85 p-5 shadow-card">
+      <div>
         <h2 className="font-heading text-2xl font-bold text-ink">{title}</h2>
         <p className="mt-2 text-sm text-ink/65">{description}</p>
+      </div>
 
-        <div className="mt-5 grid gap-4 md:grid-cols-3">
-          {podium.map((entry) => (
-            <div key={entry.position} className="rounded-[1.5rem] border border-ink/10 bg-field p-4">
-              <p className="text-sm font-bold uppercase tracking-[0.16em] text-leaf">{entry.position}º lugar</p>
-              {entry.participants.length ? (
-                <div className="mt-3 space-y-3">
-                  {entry.participants.map((participant) => (
-                    <div key={participant.registrationCode} className="rounded-2xl bg-white px-4 py-3 shadow-sm">
-                      <p className="font-bold text-ink">{participant.name}</p>
-                      <p className="mt-1 text-sm text-ink/65">{participant.correctCount} acertos</p>
-                      <p className="mt-1 text-xs text-ink/55">
-                        {formatCpf(participant.cpf)} | {participant.registrationCode}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="mt-3 text-sm text-ink/60">Ainda sem participantes nesta colocação.</p>
-              )}
-            </div>
-          ))}
-        </div>
+      <RankingSectionBody podium={podium} ranking={ranking} emptyMessage={emptyMessage} titleKey={title} />
+    </div>
+  );
+}
+
+function RankingSectionBody({
+  podium,
+  ranking,
+  emptyMessage,
+  titleKey
+}: {
+  podium: ReturnType<typeof getPodium>;
+  ranking: ReturnType<typeof buildParticipantRanking>;
+  emptyMessage: string;
+  titleKey: string;
+}) {
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-3">
+        {podium.map((entry) => (
+          <div key={entry.position} className="rounded-[1.5rem] border border-ink/10 bg-field p-4">
+            <p className="text-sm font-bold uppercase tracking-[0.16em] text-leaf">{entry.position}º lugar</p>
+            {entry.participants.length ? (
+              <div className="mt-3 space-y-3">
+                {entry.participants.map((participant) => (
+                  <div key={participant.registrationCode} className="rounded-2xl bg-white px-4 py-3 shadow-sm">
+                    <p className="font-bold text-ink">{participant.name}</p>
+                    <p className="mt-1 text-sm text-ink/65">{participant.correctCount} acertos</p>
+                    <p className="mt-1 text-xs text-ink/55">
+                      {formatCpf(participant.cpf)} | {participant.registrationCode}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-3 text-sm text-ink/60">Ainda sem participantes nesta colocação.</p>
+            )}
+          </div>
+        ))}
       </div>
 
       <div className="overflow-hidden rounded-[1.75rem] bg-white/85 shadow-card">
@@ -244,7 +297,7 @@ function RankingSection({
             </div>
             {ranking.map((participant) => (
               <div
-                key={`${title}-${participant.registrationCode}`}
+                key={`${titleKey}-${participant.registrationCode}`}
                 className="grid gap-2 border-b border-ink/10 p-4 text-sm last:border-b-0 lg:grid-cols-[0.5fr_1.1fr_1fr_1fr_1fr_0.7fr] lg:gap-3"
               >
                 <span className="font-bold text-leaf">{participant.position}º</span>
