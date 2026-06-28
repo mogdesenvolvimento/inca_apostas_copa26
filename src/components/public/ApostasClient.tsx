@@ -103,6 +103,159 @@ function formatClassificationDistance(value: number) {
   return value === 1 ? "Falta 1 acerto" : `Faltam ${value} acertos`;
 }
 
+function ClassificationModalPhaseContent({
+  classificationAvailable,
+  classificationSummary,
+  classificationStageLabel,
+  classificationTop3Text,
+  classificationLeaderText,
+  classificationProgressText,
+  classificationStatusText,
+  classificationPhaseCards,
+  currentClassificationPhase,
+  noRankingYetText
+}: {
+  classificationAvailable: boolean;
+  classificationSummary: ClassificationSummary | null;
+  classificationStageLabel: string;
+  classificationTop3Text: string;
+  classificationLeaderText: string;
+  classificationProgressText: string;
+  classificationStatusText: string;
+  classificationPhaseCards: Array<ClassificationPhaseSummary & { isCurrent: boolean }>;
+  currentClassificationPhase: (ClassificationPhaseSummary & { isCurrent: boolean }) | null;
+  noRankingYetText: string;
+}) {
+  return (
+    <div className="mt-5 space-y-4">
+      <div className="rounded-[1.35rem] bg-white px-5 py-4 text-center shadow-[0_8px_22px_rgba(31,42,55,0.08)]">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal">Fase em apuracao</p>
+        <p className="mt-2 font-heading text-[clamp(1.15rem,3vw,1.5rem)] font-bold text-ink">
+          {currentClassificationPhase?.stageLabel ?? classificationStageLabel}
+        </p>
+      </div>
+
+      {classificationAvailable && classificationSummary ? (
+        <>
+          <div className="rounded-[1.45rem] bg-white px-5 py-5 text-center shadow-[0_8px_22px_rgba(31,42,55,0.08)]">
+            <p className="font-heading text-[clamp(2rem,6vw,3.25rem)] font-bold leading-none text-ink">
+              {classificationSummary.inRanking && classificationSummary.position !== null
+                ? `#${classificationSummary.position}o Lugar`
+                : "Fora do ranking"}
+            </p>
+          </div>
+
+          <div className="rounded-[1.35rem] bg-white px-5 py-4 text-center shadow-[0_8px_22px_rgba(31,42,55,0.08)]">
+            <p className="text-lg font-semibold text-ink">
+              {classificationSummary.correctCount} {classificationSummary.correctCount === 1 ? "Acerto" : "Acertos"}
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-[1.35rem] bg-white px-5 py-4 text-center shadow-[0_8px_22px_rgba(31,42,55,0.08)]">
+              <p className="text-sm font-semibold text-ink">Para entrar no Top 3</p>
+              <p className="mt-2 text-base font-bold text-ink">{classificationTop3Text}</p>
+            </div>
+
+            <div className="rounded-[1.35rem] bg-white px-5 py-4 text-center shadow-[0_8px_22px_rgba(31,42,55,0.08)]">
+              <p className="text-sm font-semibold text-ink">Para assumir a lideranca</p>
+              <p className="mt-2 text-base font-bold text-ink">{classificationLeaderText}</p>
+            </div>
+          </div>
+
+          <div className="rounded-[1.35rem] bg-white px-5 py-5 shadow-[0_8px_22px_rgba(31,42,55,0.08)]">
+            <div className="text-center">
+              <p className="text-sm font-semibold text-ink">Desempenho da rodada</p>
+              <p className="mt-2 text-sm text-ink/70">{classificationProgressText}</p>
+            </div>
+
+            <div className="mt-4 h-3 overflow-hidden rounded-full bg-[#E7DABF]">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-wine via-clay to-amber transition-[width] duration-500"
+                style={{ width: `${classificationSummary.progressPercent}%` }}
+              />
+            </div>
+
+            <p className="mt-3 text-center text-sm font-semibold text-ink/72">
+              {classificationSummary.progressPercent}%
+            </p>
+          </div>
+
+          <div className="rounded-[1.35rem] bg-white px-5 py-4 text-center shadow-[0_8px_22px_rgba(31,42,55,0.08)]">
+            <p className="text-sm font-medium leading-relaxed text-ink">{classificationStatusText}</p>
+          </div>
+        </>
+      ) : (
+        <div className="rounded-[1.35rem] bg-white px-5 py-6 text-center shadow-[0_8px_22px_rgba(31,42,55,0.08)]">
+          <p className="text-base leading-relaxed text-ink">{noRankingYetText}</p>
+        </div>
+      )}
+
+      {classificationPhaseCards.length ? (
+        <div className="rounded-[1.35rem] bg-white px-5 py-5 shadow-[0_8px_22px_rgba(31,42,55,0.08)]">
+          <div className="text-center">
+            <p className="text-sm font-semibold text-ink">Resultados por fase</p>
+            <p className="mt-1 text-sm text-ink/70">Seu desempenho fica separado em cada etapa da competicao.</p>
+          </div>
+
+          <div className="mt-4 space-y-3">
+            {classificationPhaseCards.map((phase, index) => (
+              <details
+                key={phase.stage ?? phase.stageLabel}
+                className={`group overflow-hidden rounded-[1.15rem] border ${
+                  phase.isCurrent ? "border-[#E7DABF] bg-[#FCF7EC]" : "border-[#EFE4CB] bg-[#FFFDFC]"
+                }`}
+                open={phase.isCurrent || index === 0}
+              >
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 marker:hidden">
+                  <div className="text-left">
+                    <p className="text-sm font-semibold text-ink">{phase.stageLabel}</p>
+                    <p className="mt-1 text-sm text-ink/70">
+                      {phase.available && phase.summary
+                        ? `${phase.summary.correctCount} ${
+                            phase.summary.correctCount === 1 ? "acerto" : "acertos"
+                          } nesta fase`
+                        : "Aguardando resultados oficiais desta fase"}
+                    </p>
+                  </div>
+
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#E7DABF] bg-white text-xl font-bold text-ink transition group-open:rotate-45">
+                    +
+                  </span>
+                </summary>
+
+                <div className="border-t border-[#EFE4CB] px-4 py-4 text-left">
+                  <p className="text-base font-bold text-ink">
+                    {phase.available && phase.summary
+                      ? phase.summary.inRanking && phase.summary.position !== null
+                        ? `#${phase.summary.position}o lugar`
+                        : "Fora do ranking"
+                      : "Sem classificacao"}
+                  </p>
+
+                  <p className="mt-2 text-sm leading-relaxed text-ink/72">
+                    {phase.available && phase.summary
+                      ? `${phase.summary.correctCount} ${
+                          phase.summary.correctCount === 1 ? "resultado acertado" : "resultados acertados"
+                        } nesta fase.`
+                      : "Aguardando resultados oficiais para exibir sua posicao nesta fase."}
+                  </p>
+
+                  {phase.isCurrent ? (
+                    <p className="mt-3 text-xs font-medium uppercase tracking-[0.14em] text-teal">
+                      Fase atual exibida acima
+                    </p>
+                  ) : null}
+                </div>
+              </details>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function ApostasClient() {
   const router = useRouter();
   const closeClassificationButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -341,6 +494,11 @@ export function ApostasClient() {
     [classificationPhases, classificationStageLabel]
   );
 
+  const currentClassificationPhase = useMemo(
+    () => classificationPhaseCards.find((phase) => phase.isCurrent) ?? classificationPhaseCards[0] ?? null,
+    [classificationPhaseCards]
+  );
+
   function handleScoreChange(matchId: string, side: "home" | "away", value: string) {
     if (value !== EMPTY_SCORE && !/^\d+$/.test(value)) {
       return;
@@ -565,10 +723,25 @@ export function ApostasClient() {
                   Minha Classificação
                 </h2>
               </div>
-              <p className="mt-1 text-sm text-ink/68">Desempenho atual em {classificationStageLabel}</p>
+              <p className="mt-1 text-sm text-ink/68">
+                Desempenho atual em {currentClassificationPhase?.stageLabel ?? classificationStageLabel}
+              </p>
             </div>
 
-            <div className="mt-5 space-y-4">
+            <ClassificationModalPhaseContent
+              classificationAvailable={classificationAvailable}
+              classificationSummary={classificationSummary}
+              classificationStageLabel={classificationStageLabel}
+              classificationTop3Text={classificationTop3Text}
+              classificationLeaderText={classificationLeaderText}
+              classificationProgressText={classificationProgressText}
+              classificationStatusText={classificationStatusText}
+              classificationPhaseCards={classificationPhaseCards}
+              currentClassificationPhase={currentClassificationPhase}
+              noRankingYetText={publicCopy.bets.noRankingYet}
+            />
+
+            <div className="hidden">
               <div className="rounded-[1.35rem] bg-white px-5 py-4 text-center shadow-[0_8px_22px_rgba(31,42,55,0.08)]">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal">Fase em apuração</p>
                 <p className="mt-2 font-heading text-[clamp(1.15rem,3vw,1.5rem)] font-bold text-ink">
