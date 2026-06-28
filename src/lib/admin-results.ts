@@ -122,10 +122,6 @@ export function isWinningBet(
     return betIsDraw && Boolean(bet.goesToPenalties) && bet.penaltyWinnerSide === match.penaltyWinnerSide;
   }
 
-  if (betIsDraw) {
-    return false;
-  }
-
   const officialHomeScore = match.officialScoreHome;
   const officialAwayScore = match.officialScoreAway;
 
@@ -133,7 +129,7 @@ export function isWinningBet(
     return false;
   }
 
-  return resolveWinnerSide(bet.homeScoreGuess, bet.awayScoreGuess) === resolveWinnerSide(officialHomeScore, officialAwayScore);
+  return bet.homeScoreGuess === officialHomeScore && bet.awayScoreGuess === officialAwayScore;
 }
 
 export function buildParticipantRanking(matches: MatchResultSummary[]): ParticipantRankingItem[] {
@@ -261,12 +257,4 @@ export function getParticipantClassificationSummary(
     totalResultsCount,
     leaderCount
   };
-}
-
-function resolveWinnerSide(homeScore: number, awayScore: number) {
-  if (homeScore === awayScore) {
-    return null;
-  }
-
-  return homeScore > awayScore ? "home" : "away";
 }

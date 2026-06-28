@@ -619,7 +619,7 @@ describe("admin results", () => {
     ).toBe(false);
   });
 
-  it("considera acerto no mata-mata com vencedor no placar pelo vencedor da partida", () => {
+  it("considera acerto no mata-mata com vencedor no placar apenas quando o placar exato confere", () => {
     expect(
       isWinningBet(
         {
@@ -630,12 +630,32 @@ describe("admin results", () => {
           penaltyWinnerSide: null
         },
         {
-          homeScoreGuess: 3,
-          awayScoreGuess: 1,
+          homeScoreGuess: 2,
+          awayScoreGuess: 0,
           goesToPenalties: false,
           penaltyWinnerSide: null
         }
       )
     ).toBe(true);
+  });
+
+  it("não considera acerto no mata-mata só por vencedor quando o placar é diferente", () => {
+    expect(
+      isWinningBet(
+        {
+          stage: "round_of_32",
+          officialScoreHome: 0,
+          officialScoreAway: 1,
+          wentToPenalties: false,
+          penaltyWinnerSide: null
+        },
+        {
+          homeScoreGuess: 1,
+          awayScoreGuess: 2,
+          goesToPenalties: false,
+          penaltyWinnerSide: null
+        }
+      )
+    ).toBe(false);
   });
 });
