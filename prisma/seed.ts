@@ -60,12 +60,19 @@ function isActiveStatus(status: string) {
   return !["finished", "completed", "cancelled", "finalizado", "encerrado", "inactive"].includes(status.toLowerCase());
 }
 
+function shouldIncludeTestMatches() {
+  if (process.env.INCLUDE_TEST_MATCHES === "YES") return true;
+  if (process.env.INCLUDE_TEST_MATCHES === "NO") return false;
+  return process.env.NODE_ENV !== "production";
+}
+
 async function main() {
   const adminEmail = process.env.ADMIN_EMAIL ?? "admin@inca.local";
   const adminPassword = process.env.ADMIN_PASSWORD ?? "admin123";
   const adminName = process.env.ADMIN_NAME ?? "Administrador";
+  const includeTestMatches = shouldIncludeTestMatches();
   const matches = [
-    ...loadMatches("incaPredictionsTestMatches.seed.json"),
+    ...(includeTestMatches ? loadMatches("incaPredictionsTestMatches.seed.json") : []),
     ...loadMatches("internationalFootballSeasonGroupStage.seed.json"),
     ...loadMatches("internationalFootballSeasonRoundOf32.seed.json")
   ];
@@ -152,6 +159,7 @@ async function main() {
   console.log(`[seed] Matches criadas: ${createdMatches}`);
   console.log(`[seed] Matches atualizadas: ${updatedMatches}`);
   console.log(`[seed] Matches no arquivo de seed: ${matches.length}`);
+  console.log(`[seed] Jogos de teste ${includeTestMatches ? "incluídos" : "ignorados"} neste ambiente.`);
   console.log(`[seed] Admin ${existingAdmin ? "preservado/atualizado" : "criado"}: ${adminEmail}`);
 }
 
