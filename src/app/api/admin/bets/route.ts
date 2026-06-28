@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
-import { attachMatchResults } from "@/lib/admin-results-db";
-import { buildParticipantRanking, getWinnersForMatch, hasOfficialResult } from "@/lib/admin-results";
-import { normalizeCpf } from "@/lib/cpf";
 import { getCurrentAdmin } from "@/lib/auth";
+import { buildParticipantRanking, getWinnersForMatch, hasOfficialResult } from "@/lib/admin-results";
+import { attachMatchResults } from "@/lib/admin-results-db";
+import { normalizeCpf } from "@/lib/cpf";
 import { jsonError } from "@/lib/http";
+import { resolveCurrentCompetitiveStage } from "@/lib/match-stages";
 import { normalizePhone } from "@/lib/phone";
 import { prisma } from "@/lib/prisma";
 
@@ -74,11 +75,15 @@ export async function GET(request: Request) {
         orderBy: [{ matchDate: "asc" }, { kickoffAt: "asc" }]
       })
     ]);
+
     const [filteredMatches, allMatches] = await Promise.all([
       attachMatchResults(filteredMatchesBase),
       attachMatchResults(allMatchesBase)
     ]);
-    const matchesWithResults = allMatches.filter((match) => hasOfficialResult(match));
+
+    const currentStage = resolveCurrentCompetitiveStage(allMatches);
+    const stageMatches = currentStage ? allMatches.filter((match) => (match.stage ?? "group") === currentStage) : allMatches;
+    const matchesWithResults = stageMatches.filter((match) => hasOfficialResult(match));
     const ranking = buildParticipantRanking(matchesWithResults);
 
     const sections = [
@@ -104,8 +109,8 @@ export async function GET(request: Request) {
         "resultados_oficiais",
         "grupo,data,hora,confronto,resultado_oficial",
         filteredMatches
-          .filter((match: any) => hasOfficialResult(match))
-          .map((match: any) =>
+          .filter((match) => hasOfficialResult(match))
+          .map((match) =>
             [
               match.groupName,
               match.matchDate,
@@ -120,7 +125,7 @@ export async function GET(request: Request) {
       buildCsvSection(
         "acertadores_por_jogo",
         "grupo,data,hora,confronto,codigo,nome,cpf,telefone,placar_enviado,horario_envio",
-        filteredMatches.flatMap((match: any) =>
+        filteredMatches.flatMap((match) =>
           getWinnersForMatch(match).map((winner) =>
             [
               match.groupName,

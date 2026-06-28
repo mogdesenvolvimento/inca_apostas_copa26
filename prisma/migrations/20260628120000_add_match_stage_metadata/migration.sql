@@ -1,0 +1,7 @@
+ALTER TABLE "Match" ADD COLUMN "matchNumber" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "Match" ADD COLUMN "stage" TEXT NOT NULL DEFAULT 'group';
+ALTER TABLE "Match" ADD COLUMN "city" TEXT;
+ALTER TABLE "Match" ADD COLUMN "country" TEXT;
+ALTER TABLE "Match" ADD COLUMN "status" TEXT NOT NULL DEFAULT 'scheduled';
+
+CREATE INDEX "Match_stage_idx" ON "Match"("stage");

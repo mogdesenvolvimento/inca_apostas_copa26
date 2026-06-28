@@ -25,12 +25,17 @@ model Participant {
 
 model Match {
   id               String    @id @default(cuid())
+  matchNumber      Int       @default(0)
+  stage            String    @default("group")
   groupName        String
   matchDate        String
   matchTime        String
   kickoffAt        DateTime
   homeTeam         String
   awayTeam         String
+  city             String?
+  country          String?
+  status           String    @default("scheduled")
   officialScoreHome Int?
   officialScoreAway Int?
   resultRegisteredAt DateTime?
@@ -41,6 +46,7 @@ model Match {
 
   @@index([matchDate])
   @@index([groupName])
+  @@index([stage])
 }
 
 model Bet {

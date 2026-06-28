@@ -16,6 +16,7 @@ type SeedMatch = {
   awayTeam: string;
   stadium: string;
   city: string;
+  country?: string;
   status: string;
 };
 
@@ -26,8 +27,37 @@ function loadMatches(fileName: string): SeedMatch[] {
   return JSON.parse(normalizedContent) as SeedMatch[];
 }
 
+function isKnockoutStage(stage: string) {
+  return ["round_of_32", "round_of_16", "quarter_final", "semi_final", "final"].includes(stage);
+}
+
 function buildMatchId(match: SeedMatch) {
+  if (isKnockoutStage(match.stage)) {
+    return `${match.stage}-${String(match.matchNumber).padStart(3, "0")}-${match.matchDate}-${match.matchTime}-${match.homeTeam}-${match.awayTeam}`;
+  }
+
   return `group-${String(match.matchNumber).padStart(3, "0")}-${match.group}-${match.matchDate}-${match.matchTime}-${match.homeTeam}-${match.awayTeam}`;
+}
+
+function getStageLabel(match: SeedMatch) {
+  switch (match.stage) {
+    case "round_of_32":
+      return "16 Avos de Final";
+    case "round_of_16":
+      return "Oitavas de Final";
+    case "quarter_final":
+      return "Quartas de Final";
+    case "semi_final":
+      return "Semifinais";
+    case "final":
+      return "Final";
+    default:
+      return `Grupo ${match.group}`;
+  }
+}
+
+function isActiveStatus(status: string) {
+  return !["finished", "completed", "cancelled", "finalizado", "encerrado", "inactive"].includes(status.toLowerCase());
 }
 
 async function main() {
@@ -36,7 +66,8 @@ async function main() {
   const adminName = process.env.ADMIN_NAME ?? "Administrador";
   const matches = [
     ...loadMatches("incaPredictionsTestMatches.seed.json"),
-    ...loadMatches("internationalFootballSeasonGroupStage.seed.json")
+    ...loadMatches("internationalFootballSeasonGroupStage.seed.json"),
+    ...loadMatches("internationalFootballSeasonRoundOf32.seed.json")
   ];
 
   const existingAdmin = await prisma.adminUser.findUnique({
@@ -66,23 +97,33 @@ async function main() {
       prisma.match.upsert({
         where: { id: buildMatchId(match) },
         update: {
-          groupName: `Grupo ${match.group}`,
+          matchNumber: match.matchNumber,
+          stage: match.stage,
+          groupName: getStageLabel(match),
           matchDate: match.matchDate,
           matchTime: match.matchTime,
           kickoffAt: new Date(match.kickoffAt),
           homeTeam: match.homeTeam,
           awayTeam: match.awayTeam,
-          isActive: match.status === "scheduled"
+          city: match.city,
+          country: match.country ?? null,
+          status: match.status,
+          isActive: isActiveStatus(match.status)
         },
         create: {
           id: buildMatchId(match),
-          groupName: `Grupo ${match.group}`,
+          matchNumber: match.matchNumber,
+          stage: match.stage,
+          groupName: getStageLabel(match),
           matchDate: match.matchDate,
           matchTime: match.matchTime,
           kickoffAt: new Date(match.kickoffAt),
           homeTeam: match.homeTeam,
           awayTeam: match.awayTeam,
-          isActive: match.status === "scheduled"
+          city: match.city,
+          country: match.country ?? null,
+          status: match.status,
+          isActive: isActiveStatus(match.status)
         }
       })
     )

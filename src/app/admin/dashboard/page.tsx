@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AdminNav } from "@/components/admin/AdminNav";
-import { attachMatchResults } from "@/lib/admin-results-db";
 import { buildParticipantRanking, getPodium, hasOfficialResult } from "@/lib/admin-results";
+import { attachMatchResults } from "@/lib/admin-results-db";
 import { getCurrentAdmin } from "@/lib/auth";
 import { adminCopy } from "@/lib/copy";
 import { formatCpf } from "@/lib/cpf";
+import { getStageLabel, resolveCurrentCompetitiveStage } from "@/lib/match-stages";
 import { filterMatchesForCurrentBolaoWindow, getMatchDisplayTime } from "@/lib/matches";
 import { formatPhoneBR } from "@/lib/phone";
 import { prisma } from "@/lib/prisma";
@@ -43,7 +44,9 @@ export default async function AdminDashboardPage() {
   ]);
 
   const visibleMatches = filterMatchesForCurrentBolaoWindow(dashboardMatches).matches;
-  const matchesWithResults = allMatches.filter((match) => hasOfficialResult(match));
+  const currentStage = resolveCurrentCompetitiveStage(allMatches);
+  const stageMatches = currentStage ? allMatches.filter((match) => (match.stage ?? "group") === currentStage) : allMatches;
+  const matchesWithResults = stageMatches.filter((match) => hasOfficialResult(match));
 
   const ranking = buildParticipantRanking(matchesWithResults);
   const podium = getPodium(ranking);
@@ -57,6 +60,7 @@ export default async function AdminDashboardPage() {
           <div>
             <h1 className="font-display-accent text-4xl text-ink">{adminCopy.dashboard.title}</h1>
             <p className="text-ink/65">{adminCopy.dashboard.subtitle}</p>
+            <p className="mt-1 text-sm text-ink/55">Classificação atual: {getStageLabel(currentStage)}</p>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
@@ -127,7 +131,7 @@ export default async function AdminDashboardPage() {
                 ))}
               </>
             ) : (
-              <p className="p-5 text-sm text-ink/70">Ainda não há jogos com resultado oficial cadastrado.</p>
+              <p className="p-5 text-sm text-ink/70">Ainda não há jogos com resultado oficial cadastrado nesta fase.</p>
             )}
           </div>
 

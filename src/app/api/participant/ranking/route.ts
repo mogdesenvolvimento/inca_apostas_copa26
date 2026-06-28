@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { getCurrentParticipant } from "@/lib/auth";
-import { getParticipantClassificationSummary, buildParticipantRanking, hasOfficialResult } from "@/lib/admin-results";
+import { buildParticipantRanking, getParticipantClassificationSummary, hasOfficialResult } from "@/lib/admin-results";
 import { jsonError } from "@/lib/http";
+import { getStageLabel, resolveCurrentCompetitiveStage } from "@/lib/match-stages";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
@@ -22,12 +23,16 @@ export async function GET() {
     orderBy: [{ matchDate: "asc" }, { kickoffAt: "asc" }]
   });
 
-  const matchesWithResults = matches.filter((match) => hasOfficialResult(match));
+  const currentStage = resolveCurrentCompetitiveStage(matches);
+  const stageMatches = currentStage ? matches.filter((match) => (match.stage ?? "group") === currentStage) : matches;
+  const matchesWithResults = stageMatches.filter((match) => hasOfficialResult(match));
   const ranking = buildParticipantRanking(matchesWithResults);
   const summary = getParticipantClassificationSummary(ranking, participant.id, matchesWithResults.length);
 
   return NextResponse.json({
     available: Boolean(summary),
+    stage: currentStage,
+    stageLabel: getStageLabel(currentStage),
     summary
   });
 }
