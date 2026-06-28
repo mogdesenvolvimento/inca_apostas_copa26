@@ -6,11 +6,25 @@ import { attachMatchResults } from "@/lib/admin-results-db";
 import { getCurrentAdmin } from "@/lib/auth";
 import { adminCopy } from "@/lib/copy";
 import { formatCpf } from "@/lib/cpf";
-import { getStageLabel, resolveCurrentCompetitiveStage } from "@/lib/match-stages";
+import {
+  getStageLabel,
+  getStageOrder,
+  isCompetitiveStage,
+  resolveCurrentCompetitiveStage
+} from "@/lib/match-stages";
 import { filterMatchesForCurrentBolaoWindow, getMatchDisplayTime } from "@/lib/matches";
 import { formatPhoneBR } from "@/lib/phone";
 import { prisma } from "@/lib/prisma";
 import { getSaoPauloDateString } from "@/lib/timezone";
+
+type DashboardSection = {
+  id: string;
+  title: string;
+  description: string;
+  emptyMessage: string;
+  podium: ReturnType<typeof getPodium>;
+  ranking: ReturnType<typeof buildParticipantRanking>;
+};
 
 export default async function AdminDashboardPage() {
   const admin = await getCurrentAdmin();
@@ -45,12 +59,52 @@ export default async function AdminDashboardPage() {
 
   const visibleMatches = filterMatchesForCurrentBolaoWindow(dashboardMatches).matches;
   const currentStage = resolveCurrentCompetitiveStage(allMatches);
-  const stageMatches = currentStage ? allMatches.filter((match) => (match.stage ?? "group") === currentStage) : allMatches;
-  const matchesWithResults = stageMatches.filter((match) => hasOfficialResult(match));
+  const currentStageMatches = currentStage
+    ? allMatches.filter((match) => (match.stage ?? "group") === currentStage)
+    : allMatches;
+  const currentStageResults = currentStageMatches.filter((match) => hasOfficialResult(match));
 
-  const ranking = buildParticipantRanking(matchesWithResults);
-  const podium = getPodium(ranking);
-  const totalCorrectPredictions = ranking.reduce((sum, item) => sum + item.correctCount, 0);
+  const currentStageRanking = buildParticipantRanking(currentStageResults);
+  const totalCorrectPredictions = currentStageRanking.reduce((sum, item) => sum + item.correctCount, 0);
+
+  const competitiveMatches = allMatches.filter((match) => isCompetitiveStage(match.stage ?? "group"));
+  const overallMatchesWithResults = competitiveMatches.filter((match) => hasOfficialResult(match));
+  const overallRanking = buildParticipantRanking(overallMatchesWithResults);
+  const overallPodium = getPodium(overallRanking);
+
+  const stageSections: DashboardSection[] = competitiveMatches
+    .reduce<string[]>((stages, match) => {
+      const stage = match.stage ?? "group";
+      if (!stages.includes(stage)) stages.push(stage);
+      return stages;
+    }, [])
+    .sort((stageA, stageB) => getStageOrder(stageA) - getStageOrder(stageB))
+    .map((stage) => {
+      const stageMatches = competitiveMatches.filter((match) => (match.stage ?? "group") === stage);
+      const matchesWithResults = stageMatches.filter((match) => hasOfficialResult(match));
+      const ranking = buildParticipantRanking(matchesWithResults);
+
+      return {
+        id: stage,
+        title: `Principais acertadores da fase ${getStageLabel(stage)}`,
+        description: `Apuração consolidada dos palpites com base apenas nos resultados oficiais da fase ${getStageLabel(stage)}.`,
+        emptyMessage: `Ainda não há jogos com resultado oficial cadastrado na fase ${getStageLabel(stage)}.`,
+        podium: getPodium(ranking),
+        ranking
+      };
+    });
+
+  const rankingSections: DashboardSection[] = [
+    {
+      id: "overall",
+      title: "Principais acertadores no geral",
+      description: "Somatório de acertos considerando todas as fases com resultados oficiais já lançados.",
+      emptyMessage: "Ainda não há jogos com resultado oficial cadastrado para o ranking geral.",
+      podium: overallPodium,
+      ranking: overallRanking
+    },
+    ...stageSections
+  ];
 
   return (
     <div className="min-h-screen">
@@ -67,73 +121,21 @@ export default async function AdminDashboardPage() {
             <Metric label="Participantes" value={participants} />
             <Metric label="Apostas" value={bets} />
             <Metric label="Jogos de hoje" value={visibleMatches.length} />
-            <Metric label="Jogos apurados" value={matchesWithResults.length} />
+            <Metric label="Jogos apurados" value={currentStageResults.length} />
             <Metric label="Acertos totais" value={totalCorrectPredictions} />
-            <Metric label="Acertadores únicos" value={ranking.length} />
+            <Metric label="Acertadores únicos" value={currentStageRanking.length} />
           </div>
 
-          <div className="rounded-[1.75rem] bg-white/85 p-5 shadow-card">
-            <h2 className="font-heading text-2xl font-bold text-ink">Ranking geral de acertos</h2>
-            <p className="mt-2 text-sm text-ink/65">
-              Participantes agrupados por CPF/código de participação com base nos resultados oficiais já cadastrados.
-            </p>
-
-            <div className="mt-5 grid gap-4 md:grid-cols-3">
-              {podium.map((entry) => (
-                <div key={entry.position} className="rounded-[1.5rem] border border-ink/10 bg-field p-4">
-                  <p className="text-sm font-bold uppercase tracking-[0.16em] text-leaf">{entry.position}º lugar</p>
-                  {entry.participants.length ? (
-                    <div className="mt-3 space-y-3">
-                      {entry.participants.map((participant) => (
-                        <div key={participant.registrationCode} className="rounded-2xl bg-white px-4 py-3 shadow-sm">
-                          <p className="font-bold text-ink">{participant.name}</p>
-                          <p className="mt-1 text-sm text-ink/65">{participant.correctCount} acertos</p>
-                          <p className="mt-1 text-xs text-ink/55">
-                            {formatCpf(participant.cpf)} | {participant.registrationCode}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="mt-3 text-sm text-ink/60">Ainda sem participantes nesta colocação.</p>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="overflow-hidden rounded-[1.75rem] bg-white/85 shadow-card">
-            <div className="border-b border-ink/10 p-5">
-              <h2 className="font-heading text-2xl font-bold text-ink">Maiores acertadores</h2>
-            </div>
-            {ranking.length ? (
-              <>
-                <div className="hidden grid-cols-[0.5fr_1.1fr_1fr_1fr_1fr_0.7fr] gap-3 border-b border-ink/10 p-4 text-sm font-bold text-leaf lg:grid">
-                  <span>Posição</span>
-                  <span>Nome</span>
-                  <span>CPF</span>
-                  <span>Telefone</span>
-                  <span>Código</span>
-                  <span>Acertos</span>
-                </div>
-                {ranking.map((participant) => (
-                  <div
-                    key={participant.registrationCode}
-                    className="grid gap-2 border-b border-ink/10 p-4 text-sm last:border-b-0 lg:grid-cols-[0.5fr_1.1fr_1fr_1fr_1fr_0.7fr] lg:gap-3"
-                  >
-                    <span className="font-bold text-leaf">{participant.position}º</span>
-                    <strong>{participant.name}</strong>
-                    <span>{formatCpf(participant.cpf)}</span>
-                    <span>{formatPhoneBR(participant.phone)}</span>
-                    <span className="font-bold text-leaf">{participant.registrationCode}</span>
-                    <span className="font-bold">{participant.correctCount}</span>
-                  </div>
-                ))}
-              </>
-            ) : (
-              <p className="p-5 text-sm text-ink/70">Ainda não há jogos com resultado oficial cadastrado nesta fase.</p>
-            )}
-          </div>
+          {rankingSections.map((section) => (
+            <RankingSection
+              key={section.id}
+              title={section.title}
+              description={section.description}
+              podium={section.podium}
+              ranking={section.ranking}
+              emptyMessage={section.emptyMessage}
+            />
+          ))}
 
           <div className="rounded-[1.75rem] bg-white/85 p-5 shadow-card">
             <h2 className="font-heading text-2xl font-bold text-ink">{adminCopy.dashboard.todayMatchesTitle}</h2>
@@ -179,6 +181,85 @@ export default async function AdminDashboardPage() {
           </div>
         </section>
       </main>
+    </div>
+  );
+}
+
+function RankingSection({
+  title,
+  description,
+  podium,
+  ranking,
+  emptyMessage
+}: {
+  title: string;
+  description: string;
+  podium: ReturnType<typeof getPodium>;
+  ranking: ReturnType<typeof buildParticipantRanking>;
+  emptyMessage: string;
+}) {
+  return (
+    <div className="space-y-6">
+      <div className="rounded-[1.75rem] bg-white/85 p-5 shadow-card">
+        <h2 className="font-heading text-2xl font-bold text-ink">{title}</h2>
+        <p className="mt-2 text-sm text-ink/65">{description}</p>
+
+        <div className="mt-5 grid gap-4 md:grid-cols-3">
+          {podium.map((entry) => (
+            <div key={entry.position} className="rounded-[1.5rem] border border-ink/10 bg-field p-4">
+              <p className="text-sm font-bold uppercase tracking-[0.16em] text-leaf">{entry.position}º lugar</p>
+              {entry.participants.length ? (
+                <div className="mt-3 space-y-3">
+                  {entry.participants.map((participant) => (
+                    <div key={participant.registrationCode} className="rounded-2xl bg-white px-4 py-3 shadow-sm">
+                      <p className="font-bold text-ink">{participant.name}</p>
+                      <p className="mt-1 text-sm text-ink/65">{participant.correctCount} acertos</p>
+                      <p className="mt-1 text-xs text-ink/55">
+                        {formatCpf(participant.cpf)} | {participant.registrationCode}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-3 text-sm text-ink/60">Ainda sem participantes nesta colocação.</p>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="overflow-hidden rounded-[1.75rem] bg-white/85 shadow-card">
+        <div className="border-b border-ink/10 p-5">
+          <h3 className="font-heading text-2xl font-bold text-ink">Maiores acertadores</h3>
+        </div>
+        {ranking.length ? (
+          <>
+            <div className="hidden grid-cols-[0.5fr_1.1fr_1fr_1fr_1fr_0.7fr] gap-3 border-b border-ink/10 p-4 text-sm font-bold text-leaf lg:grid">
+              <span>Posição</span>
+              <span>Nome</span>
+              <span>CPF</span>
+              <span>Telefone</span>
+              <span>Código</span>
+              <span>Acertos</span>
+            </div>
+            {ranking.map((participant) => (
+              <div
+                key={`${title}-${participant.registrationCode}`}
+                className="grid gap-2 border-b border-ink/10 p-4 text-sm last:border-b-0 lg:grid-cols-[0.5fr_1.1fr_1fr_1fr_1fr_0.7fr] lg:gap-3"
+              >
+                <span className="font-bold text-leaf">{participant.position}º</span>
+                <strong>{participant.name}</strong>
+                <span>{formatCpf(participant.cpf)}</span>
+                <span>{formatPhoneBR(participant.phone)}</span>
+                <span className="font-bold text-leaf">{participant.registrationCode}</span>
+                <span className="font-bold">{participant.correctCount}</span>
+              </div>
+            ))}
+          </>
+        ) : (
+          <p className="p-5 text-sm text-ink/70">{emptyMessage}</p>
+        )}
+      </div>
     </div>
   );
 }
