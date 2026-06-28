@@ -66,12 +66,17 @@ async function main() {
   await prisma.$executeRawUnsafe(`
     CREATE TABLE IF NOT EXISTS Match (
       id TEXT NOT NULL PRIMARY KEY,
+      matchNumber INTEGER NOT NULL DEFAULT 0,
+      stage TEXT NOT NULL DEFAULT 'group',
       groupName TEXT NOT NULL,
       matchDate TEXT NOT NULL,
       matchTime TEXT NOT NULL,
       kickoffAt DATETIME NOT NULL,
       homeTeam TEXT NOT NULL,
       awayTeam TEXT NOT NULL,
+      city TEXT,
+      country TEXT,
+      status TEXT NOT NULL DEFAULT 'scheduled',
       officialScoreHome INTEGER,
       officialScoreAway INTEGER,
       resultRegisteredAt DATETIME,
@@ -93,8 +98,24 @@ async function main() {
   if (!matchColumns.includes("resultUpdatedAt")) {
     await prisma.$executeRawUnsafe(`ALTER TABLE Match ADD COLUMN resultUpdatedAt DATETIME;`);
   }
+  if (!matchColumns.includes("matchNumber")) {
+    await prisma.$executeRawUnsafe(`ALTER TABLE Match ADD COLUMN matchNumber INTEGER NOT NULL DEFAULT 0;`);
+  }
+  if (!matchColumns.includes("stage")) {
+    await prisma.$executeRawUnsafe(`ALTER TABLE Match ADD COLUMN stage TEXT NOT NULL DEFAULT 'group';`);
+  }
+  if (!matchColumns.includes("city")) {
+    await prisma.$executeRawUnsafe(`ALTER TABLE Match ADD COLUMN city TEXT;`);
+  }
+  if (!matchColumns.includes("country")) {
+    await prisma.$executeRawUnsafe(`ALTER TABLE Match ADD COLUMN country TEXT;`);
+  }
+  if (!matchColumns.includes("status")) {
+    await prisma.$executeRawUnsafe(`ALTER TABLE Match ADD COLUMN status TEXT NOT NULL DEFAULT 'scheduled';`);
+  }
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS Match_matchDate_idx ON Match(matchDate);`);
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS Match_groupName_idx ON Match(groupName);`);
+  await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS Match_stage_idx ON Match(stage);`);
 
   await prisma.$executeRawUnsafe(`
     CREATE TABLE IF NOT EXISTS Bet (

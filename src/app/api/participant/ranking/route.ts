@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getCurrentParticipant } from "@/lib/auth";
 import { buildParticipantRanking, getParticipantClassificationSummary, hasOfficialResult } from "@/lib/admin-results";
 import { jsonError } from "@/lib/http";
-import { getStageLabel, resolveCurrentCompetitiveStage } from "@/lib/match-stages";
+import { getStageLabel, getStageOrder, isCompetitiveStage, resolveCurrentCompetitiveStage } from "@/lib/match-stages";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
@@ -28,11 +28,29 @@ export async function GET() {
   const matchesWithResults = stageMatches.filter((match) => hasOfficialResult(match));
   const ranking = buildParticipantRanking(matchesWithResults);
   const summary = getParticipantClassificationSummary(ranking, participant.id, matchesWithResults.length);
+  const availableStages = Array.from(
+    new Set(matches.map((match) => match.stage ?? "group").filter((stage) => isCompetitiveStage(stage)))
+  ).sort((a, b) => getStageOrder(a) - getStageOrder(b));
+
+  const phases = availableStages.map((stage) => {
+    const phaseMatches = matches.filter((match) => (match.stage ?? "group") === stage);
+    const phaseMatchesWithResults = phaseMatches.filter((match) => hasOfficialResult(match));
+    const phaseRanking = buildParticipantRanking(phaseMatchesWithResults);
+    const phaseSummary = getParticipantClassificationSummary(phaseRanking, participant.id, phaseMatchesWithResults.length);
+
+    return {
+      stage,
+      stageLabel: getStageLabel(stage),
+      available: Boolean(phaseSummary),
+      summary: phaseSummary
+    };
+  });
 
   return NextResponse.json({
     available: Boolean(summary),
     stage: currentStage,
     stageLabel: getStageLabel(currentStage),
-    summary
+    summary,
+    phases
   });
 }

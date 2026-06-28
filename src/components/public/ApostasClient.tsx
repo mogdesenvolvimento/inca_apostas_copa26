@@ -57,9 +57,19 @@ type ClassificationSummary = {
   leaderCount: number;
 };
 
-type RankingResponse = {
+type ClassificationPhaseSummary = {
+  stage: string | null;
+  stageLabel: string;
   available: boolean;
   summary: ClassificationSummary | null;
+};
+
+type RankingResponse = {
+  available: boolean;
+  stage: string | null;
+  stageLabel: string;
+  summary: ClassificationSummary | null;
+  phases: ClassificationPhaseSummary[];
 };
 
 const EMPTY_SCORE = "";
@@ -104,7 +114,9 @@ export function ApostasClient() {
   const [showAwardsModal, setShowAwardsModal] = useState(true);
   const [showClassificationModal, setShowClassificationModal] = useState(false);
   const [classificationAvailable, setClassificationAvailable] = useState(false);
+  const [classificationStageLabel, setClassificationStageLabel] = useState("Fase atual");
   const [classificationSummary, setClassificationSummary] = useState<ClassificationSummary | null>(null);
+  const [classificationPhases, setClassificationPhases] = useState<ClassificationPhaseSummary[]>([]);
   const [scores, setScores] = useState<Record<string, { home: string; away: string }>>({});
   const [filterDate, setFilterDate] = useState("");
   const [filterGroup, setFilterGroup] = useState("");
@@ -147,7 +159,13 @@ export function ApostasClient() {
         const participantData = (await participantResponse.json()) as ParticipantResponse;
         const matchesData = (await matchesResponse.json()) as MatchesResponse;
 
-        let rankingData: RankingResponse = { available: false, summary: null };
+        let rankingData: RankingResponse = {
+          available: false,
+          stage: null,
+          stageLabel: "Fase atual",
+          summary: null,
+          phases: []
+        };
         if (rankingResponse.ok) {
           rankingData = (await rankingResponse.json()) as RankingResponse;
         }
@@ -161,7 +179,9 @@ export function ApostasClient() {
         setGroups(matchesData.groups);
         setMessage(matchesData.message);
         setClassificationAvailable(rankingData.available);
+        setClassificationStageLabel(rankingData.stageLabel || "Fase atual");
         setClassificationSummary(rankingData.summary);
+        setClassificationPhases(rankingData.phases ?? []);
         setScores(
           Object.fromEntries(
             matchesData.matches.map((match) => [
@@ -299,6 +319,15 @@ export function ApostasClient() {
       classificationSummary.totalResultsCount === 1 ? "" : "s"
     } acertado${classificationSummary.correctCount === 1 ? "" : "s"}`;
   }, [classificationSummary]);
+
+  const classificationPhaseCards = useMemo(
+    () =>
+      classificationPhases.map((phase) => ({
+        ...phase,
+        isCurrent: phase.stageLabel === classificationStageLabel
+      })),
+    [classificationPhases, classificationStageLabel]
+  );
 
   function handleScoreChange(matchId: string, side: "home" | "away", value: string) {
     if (value !== EMPTY_SCORE && !/^\d+$/.test(value)) {
@@ -480,11 +509,19 @@ export function ApostasClient() {
                   Minha Classificação
                 </h2>
               </div>
-              <p className="mt-1 text-sm text-ink/68">Desempenho atual na rodada</p>
+              <p className="mt-1 text-sm text-ink/68">Desempenho atual em {classificationStageLabel}</p>
             </div>
 
-            {classificationAvailable && classificationSummary ? (
-              <div className="mt-5 space-y-4">
+            <div className="mt-5 space-y-4">
+              <div className="rounded-[1.35rem] bg-white px-5 py-4 text-center shadow-[0_8px_22px_rgba(31,42,55,0.08)]">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal">Fase em apuração</p>
+                <p className="mt-2 font-heading text-[clamp(1.15rem,3vw,1.5rem)] font-bold text-ink">
+                  {classificationStageLabel}
+                </p>
+              </div>
+
+              {classificationAvailable && classificationSummary ? (
+                <>
                 <div className="rounded-[1.45rem] bg-white px-5 py-5 text-center shadow-[0_8px_22px_rgba(31,42,55,0.08)]">
                   <p className="font-heading text-[clamp(2rem,6vw,3.25rem)] font-bold leading-none text-ink">
                     {classificationSummary.inRanking && classificationSummary.position !== null
@@ -533,12 +570,109 @@ export function ApostasClient() {
                 <div className="rounded-[1.35rem] bg-white px-5 py-4 text-center shadow-[0_8px_22px_rgba(31,42,55,0.08)]">
                   <p className="text-sm font-medium leading-relaxed text-ink">{classificationStatusText}</p>
                 </div>
-              </div>
-            ) : (
-              <div className="mt-5 rounded-[1.35rem] bg-white px-5 py-6 text-center shadow-[0_8px_22px_rgba(31,42,55,0.08)]">
-                <p className="text-base leading-relaxed text-ink">{publicCopy.bets.noRankingYet}</p>
-              </div>
-            )}
+
+                {classificationPhaseCards.length ? (
+                  <div className="rounded-[1.35rem] bg-white px-5 py-5 shadow-[0_8px_22px_rgba(31,42,55,0.08)]">
+                    <div className="text-center">
+                      <p className="text-sm font-semibold text-ink">Resultados por fase</p>
+                      <p className="mt-1 text-sm text-ink/70">Seu desempenho fica separado em cada etapa da competição.</p>
+                    </div>
+
+                    <div className="mt-4 space-y-3">
+                      {classificationPhaseCards.map((phase) => (
+                        <div
+                          key={phase.stage ?? phase.stageLabel}
+                          className={`rounded-[1.15rem] border px-4 py-4 text-left ${
+                            phase.isCurrent ? "border-[#E7DABF] bg-[#FCF7EC]" : "border-[#EFE4CB] bg-[#FFFDFC]"
+                          }`}
+                        >
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                              <p className="text-sm font-semibold text-ink">{phase.stageLabel}</p>
+                              <p className="mt-1 text-sm text-ink/70">
+                                {phase.available && phase.summary
+                                  ? `${phase.summary.correctCount} ${
+                                      phase.summary.correctCount === 1 ? "acerto" : "acertos"
+                                    } nesta fase`
+                                  : "Aguardando resultados oficiais desta fase"}
+                              </p>
+                            </div>
+
+                            <div className="text-sm font-bold text-ink">
+                              {phase.available && phase.summary
+                                ? phase.summary.inRanking && phase.summary.position !== null
+                                  ? `#${phase.summary.position}º lugar`
+                                  : "Fora do ranking"
+                                : "Sem classificação"}
+                            </div>
+                          </div>
+
+                          {phase.isCurrent ? (
+                            <p className="mt-2 text-xs font-medium uppercase tracking-[0.14em] text-teal">
+                              Fase atual exibida acima
+                            </p>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+                </>
+              ) : (
+                <>
+                  <div className="rounded-[1.35rem] bg-white px-5 py-6 text-center shadow-[0_8px_22px_rgba(31,42,55,0.08)]">
+                    <p className="text-base leading-relaxed text-ink">{publicCopy.bets.noRankingYet}</p>
+                  </div>
+
+                  {classificationPhaseCards.length ? (
+                    <div className="rounded-[1.35rem] bg-white px-5 py-5 shadow-[0_8px_22px_rgba(31,42,55,0.08)]">
+                      <div className="text-center">
+                        <p className="text-sm font-semibold text-ink">Resultados por fase</p>
+                        <p className="mt-1 text-sm text-ink/70">Seu desempenho fica separado em cada etapa da competição.</p>
+                      </div>
+
+                      <div className="mt-4 space-y-3">
+                        {classificationPhaseCards.map((phase) => (
+                          <div
+                            key={phase.stage ?? phase.stageLabel}
+                            className={`rounded-[1.15rem] border px-4 py-4 text-left ${
+                              phase.isCurrent ? "border-[#E7DABF] bg-[#FCF7EC]" : "border-[#EFE4CB] bg-[#FFFDFC]"
+                            }`}
+                          >
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                              <div>
+                                <p className="text-sm font-semibold text-ink">{phase.stageLabel}</p>
+                                <p className="mt-1 text-sm text-ink/70">
+                                  {phase.available && phase.summary
+                                    ? `${phase.summary.correctCount} ${
+                                        phase.summary.correctCount === 1 ? "acerto" : "acertos"
+                                      } nesta fase`
+                                    : "Aguardando resultados oficiais desta fase"}
+                                </p>
+                              </div>
+
+                              <div className="text-sm font-bold text-ink">
+                                {phase.available && phase.summary
+                                  ? phase.summary.inRanking && phase.summary.position !== null
+                                    ? `#${phase.summary.position}º lugar`
+                                    : "Fora do ranking"
+                                  : "Sem classificação"}
+                              </div>
+                            </div>
+
+                            {phase.isCurrent ? (
+                              <p className="mt-2 text-xs font-medium uppercase tracking-[0.14em] text-teal">
+                                Fase atual exibida acima
+                              </p>
+                            ) : null}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                </>
+              )}
+            </div>
           </div>
         </div>
       ) : null}
