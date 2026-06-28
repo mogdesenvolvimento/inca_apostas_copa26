@@ -52,7 +52,12 @@
   { "matchNumber": 1045, "stage": "test", "group": "T", "matchDate": "2026-06-09", "matchTime": "22:40", "kickoffAt": "2026-06-09T22:40:00-03:00", "homeTeam": "Ultimo Teste", "awayTeam": "Lance Final", "stadium": "Arena Inca Teste", "city": "Campinas", "status": "scheduled" },
 
   { "matchNumber": 1007, "stage": "friendly", "group": "T", "matchDate": "2026-05-31", "matchTime": "17:00", "kickoffAt": "2026-05-31T17:00:00-03:00", "homeTeam": "Brasil", "awayTeam": "PanamÃ¡", "stadium": "Rodada internacional", "city": "A definir", "status": "scheduled" },
-  { "matchNumber": 1008, "stage": "friendly", "group": "T", "matchDate": "2026-06-06", "matchTime": "19:00", "kickoffAt": "2026-06-06T19:00:00-03:00", "homeTeam": "Brasil", "awayTeam": "Egito", "stadium": "Rodada internacional", "city": "A definir", "status": "scheduled" }
+  { "matchNumber": 1008, "stage": "friendly", "group": "T", "matchDate": "2026-06-06", "matchTime": "19:00", "kickoffAt": "2026-06-06T19:00:00-03:00", "homeTeam": "Brasil", "awayTeam": "Egito", "stadium": "Rodada internacional", "city": "A definir", "status": "scheduled" },
+
+  { "matchNumber": 2046, "stage": "round_of_32", "group": "16 Avos de Final", "matchDate": "2026-06-28", "matchTime": "23:10", "kickoffAt": "2026-06-28T23:10:00-03:00", "homeTeam": "Atlético Empate", "awayTeam": "União Pênaltis", "stadium": "Arena Inca Dev", "city": "Porto Alegre", "status": "scheduled" },
+  { "matchNumber": 2047, "stage": "round_of_32", "group": "16 Avos de Final", "matchDate": "2026-06-28", "matchTime": "23:20", "kickoffAt": "2026-06-28T23:20:00-03:00", "homeTeam": "Lance Final FC", "awayTeam": "Decisão SC", "stadium": "Arena Inca Dev", "city": "Porto Alegre", "status": "scheduled" },
+  { "matchNumber": 2048, "stage": "round_of_32", "group": "16 Avos de Final", "matchDate": "2026-06-28", "matchTime": "23:30", "kickoffAt": "2026-06-28T23:30:00-03:00", "homeTeam": "Trave Norte", "awayTeam": "Rede Sul", "stadium": "Arena Inca Dev", "city": "Porto Alegre", "status": "scheduled" },
+  { "matchNumber": 2049, "stage": "round_of_32", "group": "16 Avos de Final", "matchDate": "2026-06-28", "matchTime": "23:40", "kickoffAt": "2026-06-28T23:40:00-03:00", "homeTeam": "Virada FC", "awayTeam": "Classifica Já", "stadium": "Arena Inca Dev", "city": "Porto Alegre", "status": "scheduled" }
 ]
 
 

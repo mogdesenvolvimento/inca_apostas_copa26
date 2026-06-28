@@ -19,10 +19,13 @@ type ExistingBet = {
   id: string;
   homeScoreGuess: number;
   awayScoreGuess: number;
+  goesToPenalties?: boolean;
+  penaltyWinnerSide?: "home" | "away" | null;
 };
 
 type MatchResponse = {
   id: string;
+  stage?: string | null;
   groupName: string;
   matchDate: string;
   matchTime: string;
@@ -118,6 +121,7 @@ export function ApostasClient() {
   const [classificationSummary, setClassificationSummary] = useState<ClassificationSummary | null>(null);
   const [classificationPhases, setClassificationPhases] = useState<ClassificationPhaseSummary[]>([]);
   const [scores, setScores] = useState<Record<string, { home: string; away: string }>>({});
+  const [penaltySelections, setPenaltySelections] = useState<Record<string, "home" | "away" | "">>({});
   const [filterDate, setFilterDate] = useState("");
   const [filterGroup, setFilterGroup] = useState("");
   const [appliedDate, setAppliedDate] = useState("");
@@ -182,6 +186,14 @@ export function ApostasClient() {
         setClassificationStageLabel(rankingData.stageLabel || "Fase atual");
         setClassificationSummary(rankingData.summary);
         setClassificationPhases(rankingData.phases ?? []);
+        setPenaltySelections(
+          Object.fromEntries(
+            matchesData.matches.map((match) => [
+              match.id,
+              match.existingBet?.goesToPenalties && match.existingBet.penaltyWinnerSide ? match.existingBet.penaltyWinnerSide : ""
+            ])
+          )
+        );
         setScores(
           Object.fromEntries(
             matchesData.matches.map((match) => [
@@ -334,13 +346,32 @@ export function ApostasClient() {
       return;
     }
 
-    setScores((current) => ({
-      ...current,
-      [matchId]: {
+    setScores((current) => {
+      const next = {
         home: current[matchId]?.home ?? EMPTY_SCORE,
         away: current[matchId]?.away ?? EMPTY_SCORE,
         [side]: value
+      };
+
+      const isDraw = next.home !== EMPTY_SCORE && next.away !== EMPTY_SCORE && next.home === next.away;
+      if (!isDraw) {
+        setPenaltySelections((currentSelections) => ({
+          ...currentSelections,
+          [matchId]: ""
+        }));
       }
+
+      return {
+        ...current,
+        [matchId]: next
+      };
+    });
+  }
+
+  function handlePenaltySelection(matchId: string, value: "home" | "away") {
+    setPenaltySelections((current) => ({
+      ...current,
+      [matchId]: value
     }));
   }
 
@@ -355,6 +386,24 @@ export function ApostasClient() {
       return;
     }
 
+    for (const match of availableMatches) {
+      const current = scores[match.id];
+      if (!current || current.home === EMPTY_SCORE || current.away === EMPTY_SCORE) {
+        continue;
+      }
+
+      const isKnockout = ["round_of_32", "round_of_16", "quarter_final", "semi_final", "final"].includes(
+        match.stage ?? "group"
+      );
+      const isDraw = current.home === current.away;
+      const penaltyWinnerSide = penaltySelections[match.id] || "";
+
+      if (isKnockout && isDraw && !penaltyWinnerSide) {
+        setError(`Se você apostar em empate em ${match.homeTeam} x ${match.awayTeam}, escolha também quem avança nos pênaltis.`);
+        return;
+      }
+    }
+
     const bets = availableMatches
       .map((match) => {
         const current = scores[match.id];
@@ -362,10 +411,17 @@ export function ApostasClient() {
           return null;
         }
 
+        const isKnockout = ["round_of_32", "round_of_16", "quarter_final", "semi_final", "final"].includes(
+          match.stage ?? "group"
+        );
+        const isDraw = current.home === current.away;
+        const penaltyWinnerSide = penaltySelections[match.id] || "";
+
         return {
           matchId: match.id,
           homeScoreGuess: Number(current.home),
-          awayScoreGuess: Number(current.away)
+          awayScoreGuess: Number(current.away),
+          penaltyWinnerSide: isKnockout && isDraw ? penaltyWinnerSide : null
         };
       })
       .filter((item): item is NonNullable<typeof item> => item !== null);
@@ -791,6 +847,12 @@ export function ApostasClient() {
           {matches.map((match) => {
             const current = scores[match.id] ?? { home: EMPTY_SCORE, away: EMPTY_SCORE };
             const readOnly = match.status !== "available";
+            const isKnockout = ["round_of_32", "round_of_16", "quarter_final", "semi_final", "final"].includes(
+              match.stage ?? "group"
+            );
+            const shouldShowPenaltyChoice =
+              isKnockout && current.home !== EMPTY_SCORE && current.away !== EMPTY_SCORE && current.home === current.away;
+            const selectedPenaltyWinner = penaltySelections[match.id] ?? "";
 
             return (
               <article
@@ -843,6 +905,41 @@ export function ApostasClient() {
                     className="min-h-[54px] rounded-2xl border border-[#D7EAE6] bg-[#FCF7EC] px-5 text-center text-lg font-semibold text-ink outline-none transition focus:border-teal read-only:cursor-not-allowed read-only:bg-white"
                   />
                 </div>
+
+                {shouldShowPenaltyChoice ? (
+                  <div className="mt-4 rounded-2xl border border-[#E7DABF] bg-[#FFF9EF] px-5 py-4">
+                    <p className="text-sm font-semibold text-ink">
+                      Se você apostar em empate, escolha também qual seleção avança nos pênaltis.
+                    </p>
+                    <p className="mt-1 text-sm leading-relaxed text-ink/70">
+                      Nesse caso, sua pontuação será validada pelo time classificado, e não pelo placar exato do empate.
+                    </p>
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                      <label className="flex items-center gap-3 rounded-2xl border border-[#D7EAE6] bg-white px-4 py-3">
+                        <input
+                          type="radio"
+                          name={`penalties-${match.id}`}
+                          value="home"
+                          checked={selectedPenaltyWinner === "home"}
+                          onChange={() => handlePenaltySelection(match.id, "home")}
+                          disabled={readOnly}
+                        />
+                        <span className="font-semibold text-ink">{match.homeTeam}</span>
+                      </label>
+                      <label className="flex items-center gap-3 rounded-2xl border border-[#D7EAE6] bg-white px-4 py-3">
+                        <input
+                          type="radio"
+                          name={`penalties-${match.id}`}
+                          value="away"
+                          checked={selectedPenaltyWinner === "away"}
+                          onChange={() => handlePenaltySelection(match.id, "away")}
+                          disabled={readOnly}
+                        />
+                        <span className="font-semibold text-ink">{match.awayTeam}</span>
+                      </label>
+                    </div>
+                  </div>
+                ) : null}
 
                 <div className="mt-4 rounded-2xl border border-[#D7EAE6] bg-white px-5 py-4 text-center text-base font-semibold shadow-[inset_0_0_0_1px_rgba(215,234,230,0.35)]">
                   {match.status === "available" ? (

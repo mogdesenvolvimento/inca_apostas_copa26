@@ -1,6 +1,7 @@
 import { getSaoPauloDateString } from "@/lib/timezone";
 
 const COMPETITIVE_STAGE_ORDER = ["group", "round_of_32", "round_of_16", "quarter_final", "semi_final", "final"] as const;
+const KNOCKOUT_STAGE_ORDER = ["round_of_32", "round_of_16", "quarter_final", "semi_final", "final"] as const;
 
 type StageAwareMatch = {
   stage?: string | null;
@@ -10,6 +11,10 @@ type StageAwareMatch = {
 
 export function isCompetitiveStage(stage: string | null | undefined) {
   return COMPETITIVE_STAGE_ORDER.includes((stage ?? "group") as (typeof COMPETITIVE_STAGE_ORDER)[number]);
+}
+
+export function isKnockoutStage(stage: string | null | undefined) {
+  return KNOCKOUT_STAGE_ORDER.includes((stage ?? "group") as (typeof KNOCKOUT_STAGE_ORDER)[number]);
 }
 
 export function getStageOrder(stage: string | null | undefined) {

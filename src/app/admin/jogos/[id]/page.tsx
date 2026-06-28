@@ -60,6 +60,11 @@ export default async function AdminMatchDetailPage({ params }: { params: { id: s
               {match.resultUpdatedAt ? (
                 <span className="text-ink/55">Atualizado em {formatDateTimeBR(match.resultUpdatedAt)}</span>
               ) : null}
+              {resultReady && match.wentToPenalties && match.qualifiedTeam ? (
+                <span className="rounded-full bg-amber px-3 py-1 font-bold text-white">
+                  Classificado nos pênaltis: {match.qualifiedTeam}
+                </span>
+              ) : null}
             </div>
           </div>
 
@@ -67,8 +72,10 @@ export default async function AdminMatchDetailPage({ params }: { params: { id: s
             matchId={match.id}
             homeTeam={match.homeTeam}
             awayTeam={match.awayTeam}
+            stage={match.stage}
             initialHomeScore={match.officialScoreHome}
             initialAwayScore={match.officialScoreAway}
+            initialPenaltyWinnerSide={match.penaltyWinnerSide}
           />
 
           <div className="grid gap-4 sm:grid-cols-3">
@@ -81,7 +88,7 @@ export default async function AdminMatchDetailPage({ params }: { params: { id: s
             <h2 className="font-heading text-2xl font-bold text-ink">Apuração do jogo</h2>
             <p className="mt-2 text-sm text-ink/65">
               {resultReady
-                ? `${winners.length} participantes acertaram o placar deste jogo.`
+                ? `${winners.length} participantes acertaram o resultado válido deste jogo.`
                 : "A apuração aparece automaticamente assim que o resultado oficial for salvo."}
             </p>
           </div>
@@ -97,10 +104,7 @@ export default async function AdminMatchDetailPage({ params }: { params: { id: s
             </div>
             {match.bets.length ? (
               match.bets.map((bet) => {
-                const isWinner =
-                  resultReady &&
-                  bet.homeScoreGuess === match.officialScoreHome &&
-                  bet.awayScoreGuess === match.officialScoreAway;
+                const isWinner = winners.some((winner) => winner.id === bet.id);
 
                 return (
                   <div
@@ -115,6 +119,9 @@ export default async function AdminMatchDetailPage({ params }: { params: { id: s
                     <span>{formatPhoneBR(bet.participant.phone)}</span>
                     <span className="font-bold">
                       {bet.homeScoreGuess} x {bet.awayScoreGuess}
+                      {bet.goesToPenalties && bet.penaltyWinnerSide
+                        ? ` | ${bet.penaltyWinnerSide === "home" ? match.homeTeam : match.awayTeam} nos pênaltis`
+                        : ""}
                     </span>
                     <span>{formatDateTimeBR(bet.submittedAt)}</span>
                   </div>
@@ -128,7 +135,7 @@ export default async function AdminMatchDetailPage({ params }: { params: { id: s
           {resultReady ? (
             <div className="overflow-hidden rounded-[1.75rem] bg-white/85 shadow-card">
               <div className="border-b border-ink/10 p-5">
-                <h2 className="font-heading text-2xl font-bold text-ink">Acertadores do placar</h2>
+                <h2 className="font-heading text-2xl font-bold text-ink">Acertadores do resultado</h2>
               </div>
               {winners.length ? (
                 <>
@@ -151,13 +158,16 @@ export default async function AdminMatchDetailPage({ params }: { params: { id: s
                       <span>{formatPhoneBR(winner.phone)}</span>
                       <span className="font-bold">
                         {winner.homeScoreGuess} x {winner.awayScoreGuess}
+                        {winner.goesToPenalties && winner.penaltyWinnerSide
+                          ? ` | ${winner.penaltyWinnerSide === "home" ? match.homeTeam : match.awayTeam} nos pênaltis`
+                          : ""}
                       </span>
                       <span>{formatDateTimeBR(winner.submittedAt)}</span>
                     </div>
                   ))}
                 </>
               ) : (
-                <p className="p-5 text-sm text-ink/70">Nenhum participante acertou exatamente o placar deste jogo.</p>
+                <p className="p-5 text-sm text-ink/70">Nenhum participante acertou o resultado válido deste jogo.</p>
               )}
             </div>
           ) : null}

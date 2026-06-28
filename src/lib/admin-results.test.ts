@@ -3,6 +3,7 @@ import {
   buildParticipantRanking,
   getParticipantClassificationSummary,
   getPodium,
+  isWinningBet,
   getWinnersForMatch
 } from "@/lib/admin-results";
 
@@ -577,5 +578,64 @@ describe("admin results", () => {
       totalResultsCount: 4,
       leaderCount: 1
     });
+  });
+  it("considera acerto em empate no mata-mata pelo classificado nos pênaltis", () => {
+    expect(
+      isWinningBet(
+        {
+          stage: "round_of_32",
+          officialScoreHome: 2,
+          officialScoreAway: 2,
+          wentToPenalties: true,
+          penaltyWinnerSide: "home"
+        },
+        {
+          homeScoreGuess: 1,
+          awayScoreGuess: 1,
+          goesToPenalties: true,
+          penaltyWinnerSide: "home"
+        }
+      )
+    ).toBe(true);
+  });
+
+  it("não considera acerto quando o empate no mata-mata escolhe classificado errado", () => {
+    expect(
+      isWinningBet(
+        {
+          stage: "round_of_32",
+          officialScoreHome: 2,
+          officialScoreAway: 2,
+          wentToPenalties: true,
+          penaltyWinnerSide: "home"
+        },
+        {
+          homeScoreGuess: 1,
+          awayScoreGuess: 1,
+          goesToPenalties: true,
+          penaltyWinnerSide: "away"
+        }
+      )
+    ).toBe(false);
+  });
+
+  it("considera acerto no mata-mata com vencedor no placar pelo vencedor da partida", () => {
+    expect(
+      isWinningBet(
+        {
+          stage: "round_of_32",
+          officialScoreHome: 2,
+          officialScoreAway: 0,
+          wentToPenalties: false,
+          penaltyWinnerSide: null
+        },
+        {
+          homeScoreGuess: 3,
+          awayScoreGuess: 1,
+          goesToPenalties: false,
+          penaltyWinnerSide: null
+        }
+      )
+    ).toBe(true);
   });
 });

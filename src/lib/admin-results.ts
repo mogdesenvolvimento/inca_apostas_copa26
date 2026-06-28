@@ -10,12 +10,15 @@ type BetSummary = {
   id: string;
   homeScoreGuess: number;
   awayScoreGuess: number;
+  goesToPenalties?: boolean;
+  penaltyWinnerSide?: string | null;
   submittedAt: Date;
   participant: ParticipantSummary;
 };
 
 type MatchResultSummary = {
   id: string;
+  stage?: string | null;
   groupName: string;
   matchDate: string;
   matchTime: string;
@@ -23,6 +26,9 @@ type MatchResultSummary = {
   awayTeam: string;
   officialScoreHome: number | null;
   officialScoreAway: number | null;
+  wentToPenalties?: boolean;
+  penaltyWinnerSide?: string | null;
+  qualifiedTeam?: string | null;
   resultRegisteredAt?: Date | null;
   resultUpdatedAt?: Date | null;
   bets: BetSummary[];
@@ -37,6 +43,8 @@ export type MatchWinner = {
   registrationCode: string;
   homeScoreGuess: number;
   awayScoreGuess: number;
+  goesToPenalties?: boolean;
+  penaltyWinnerSide?: string | null;
   submittedAt: Date;
 };
 
@@ -71,9 +79,7 @@ export function getWinnersForMatch(match: MatchResultSummary): MatchWinner[] {
   }
 
   return match.bets
-    .filter(
-      (bet) => bet.homeScoreGuess === match.officialScoreHome && bet.awayScoreGuess === match.officialScoreAway
-    )
+    .filter((bet) => isWinningBet(match, bet))
     .map((bet) => ({
       id: bet.id,
       participantId: bet.participant.id,
@@ -83,8 +89,51 @@ export function getWinnersForMatch(match: MatchResultSummary): MatchWinner[] {
       registrationCode: bet.participant.registrationCode,
       homeScoreGuess: bet.homeScoreGuess,
       awayScoreGuess: bet.awayScoreGuess,
+      goesToPenalties: bet.goesToPenalties ?? false,
+      penaltyWinnerSide: bet.penaltyWinnerSide ?? null,
       submittedAt: bet.submittedAt
     }));
+}
+
+export function isWinningBet(
+  match: Pick<
+    MatchResultSummary,
+    "stage" | "officialScoreHome" | "officialScoreAway" | "wentToPenalties" | "penaltyWinnerSide"
+  >,
+  bet: Pick<BetSummary, "homeScoreGuess" | "awayScoreGuess" | "goesToPenalties" | "penaltyWinnerSide">
+) {
+  if (!hasOfficialResult(match)) {
+    return false;
+  }
+
+  const officialIsDraw = match.officialScoreHome === match.officialScoreAway;
+  const betIsDraw = bet.homeScoreGuess === bet.awayScoreGuess;
+  const isKnockout = ["round_of_32", "round_of_16", "quarter_final", "semi_final", "final"].includes(match.stage ?? "group");
+
+  if (!isKnockout) {
+    return bet.homeScoreGuess === match.officialScoreHome && bet.awayScoreGuess === match.officialScoreAway;
+  }
+
+  if (officialIsDraw) {
+    if (!match.wentToPenalties || !match.penaltyWinnerSide) {
+      return false;
+    }
+
+    return betIsDraw && Boolean(bet.goesToPenalties) && bet.penaltyWinnerSide === match.penaltyWinnerSide;
+  }
+
+  if (betIsDraw) {
+    return false;
+  }
+
+  const officialHomeScore = match.officialScoreHome;
+  const officialAwayScore = match.officialScoreAway;
+
+  if (officialHomeScore === null || officialAwayScore === null) {
+    return false;
+  }
+
+  return resolveWinnerSide(bet.homeScoreGuess, bet.awayScoreGuess) === resolveWinnerSide(officialHomeScore, officialAwayScore);
 }
 
 export function buildParticipantRanking(matches: MatchResultSummary[]): ParticipantRankingItem[] {
@@ -212,4 +261,12 @@ export function getParticipantClassificationSummary(
     totalResultsCount,
     leaderCount
   };
+}
+
+function resolveWinnerSide(homeScore: number, awayScore: number) {
+  if (homeScore === awayScore) {
+    return null;
+  }
+
+  return homeScore > awayScore ? "home" : "away";
 }

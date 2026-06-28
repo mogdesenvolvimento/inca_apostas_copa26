@@ -98,7 +98,7 @@ export async function GET(request: Request) {
             bet.participant.phone,
             bet.match.groupName,
             `${bet.match.homeTeam} x ${bet.match.awayTeam}`,
-            `${bet.homeScoreGuess} x ${bet.awayScoreGuess}`,
+            formatBetGuess(bet.homeScoreGuess, bet.awayScoreGuess, bet.penaltyWinnerSide, bet.match.homeTeam, bet.match.awayTeam),
             bet.submittedAt.toISOString()
           ]
             .map(csvCell)
@@ -116,7 +116,12 @@ export async function GET(request: Request) {
               match.matchDate,
               match.matchTime,
               `${match.homeTeam} x ${match.awayTeam}`,
-              `${match.officialScoreHome} x ${match.officialScoreAway}`
+              formatOfficialResult(
+                match.officialScoreHome,
+                match.officialScoreAway,
+                match.wentToPenalties,
+                match.qualifiedTeam
+              )
             ]
               .map(csvCell)
               .join(",")
@@ -136,7 +141,13 @@ export async function GET(request: Request) {
               winner.name,
               winner.cpf,
               winner.phone,
-              `${winner.homeScoreGuess} x ${winner.awayScoreGuess}`,
+              formatBetGuess(
+                winner.homeScoreGuess,
+                winner.awayScoreGuess,
+                winner.penaltyWinnerSide,
+                match.homeTeam,
+                match.awayTeam
+              ),
               winner.submittedAt.toISOString()
             ]
               .map(csvCell)
@@ -172,4 +183,32 @@ function csvCell(value: string) {
 
 function buildCsvSection(title: string, header: string, rows: string[]) {
   return [`# ${title}`, header, ...rows].join("\n");
+}
+
+function formatBetGuess(
+  homeScoreGuess: number,
+  awayScoreGuess: number,
+  penaltyWinnerSide: string | null | undefined,
+  homeTeam: string,
+  awayTeam: string
+) {
+  if (!penaltyWinnerSide) {
+    return `${homeScoreGuess} x ${awayScoreGuess}`;
+  }
+
+  return `${homeScoreGuess} x ${awayScoreGuess} | ${penaltyWinnerSide === "home" ? homeTeam : awayTeam} nos pênaltis`;
+}
+
+function formatOfficialResult(
+  officialScoreHome: number | null,
+  officialScoreAway: number | null,
+  wentToPenalties: boolean | undefined,
+  qualifiedTeam: string | null | undefined
+) {
+  const base = `${officialScoreHome} x ${officialScoreAway}`;
+  if (!wentToPenalties || !qualifiedTeam) {
+    return base;
+  }
+
+  return `${base} | ${qualifiedTeam} nos pênaltis`;
 }

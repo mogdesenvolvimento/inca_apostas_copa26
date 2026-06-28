@@ -3,11 +3,13 @@ import { attachMatchResults, getMatchResultById, saveOfficialResult } from "@/li
 import { getWinnersForMatch } from "@/lib/admin-results";
 import { getCurrentAdmin } from "@/lib/auth";
 import { jsonError, readJson } from "@/lib/http";
+import { isKnockoutStage } from "@/lib/match-stages";
 import { prisma } from "@/lib/prisma";
 
 type Body = {
   officialScoreHome?: unknown;
   officialScoreAway?: unknown;
+  penaltyWinnerSide?: unknown;
 };
 
 export async function GET(_request: Request, { params }: { params: { id: string } }) {
@@ -57,7 +59,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
 
     const existingMatch = await prisma.match.findUnique({
       where: { id: params.id },
-      select: { id: true }
+      select: { id: true, stage: true, homeTeam: true, awayTeam: true }
     });
 
     if (!existingMatch) {
@@ -67,11 +69,36 @@ export async function POST(request: Request, { params }: { params: { id: string 
     const existingResult = await getMatchResultById(params.id);
     const now = new Date();
     const isUpdate = existingResult.officialScoreHome !== null && existingResult.officialScoreAway !== null;
+    const isDraw = officialScoreHome === officialScoreAway;
+    const knockout = isKnockoutStage(existingMatch.stage);
+    const penaltyWinnerSide = normalizePenaltyWinnerSide(body.penaltyWinnerSide);
+
+    if (isDraw && knockout && !penaltyWinnerSide) {
+      throw new Error("Se o resultado oficial terminar empatado, selecione quem avançou nos pênaltis.");
+    }
+
+    if ((!isDraw || !knockout) && penaltyWinnerSide) {
+      throw new Error("A escolha de pênaltis só deve ser preenchida para empate em jogo de mata-mata.");
+    }
+
+    const qualifiedTeam =
+      isDraw && knockout && penaltyWinnerSide
+        ? penaltyWinnerSide === "home"
+          ? existingMatch.homeTeam
+          : existingMatch.awayTeam
+        : isDraw
+          ? null
+          : officialScoreHome > officialScoreAway
+            ? existingMatch.homeTeam
+            : existingMatch.awayTeam;
 
     await saveOfficialResult({
       matchId: params.id,
       officialScoreHome,
       officialScoreAway,
+      wentToPenalties: isDraw && knockout,
+      penaltyWinnerSide: isDraw && knockout ? penaltyWinnerSide : null,
+      qualifiedTeam,
       resultRegisteredAt: isUpdate ? existingResult.resultRegisteredAt ?? now : now,
       resultUpdatedAt: now
     });
@@ -114,4 +141,16 @@ function parseScore(value: unknown, message: string) {
   }
 
   return value;
+}
+
+function normalizePenaltyWinnerSide(value: unknown) {
+  if (value === undefined || value === null || value === "") {
+    return null;
+  }
+
+  if (value === "home" || value === "away") {
+    return value;
+  }
+
+  throw new Error("Seleção classificada nos pênaltis inválida.");
 }

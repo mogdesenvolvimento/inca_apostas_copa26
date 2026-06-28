@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { stateMessages } from "@/lib/copy";
+import { isKnockoutStage } from "@/lib/match-stages";
 import { getParticipantMatchBetStatusFromData } from "@/lib/matches";
 import { prisma } from "@/lib/prisma";
 import { validateScore } from "@/lib/validation";
@@ -8,7 +9,10 @@ type BetInput = {
   matchId: string;
   homeScoreGuess: unknown;
   awayScoreGuess: unknown;
+  penaltyWinnerSide?: unknown;
 };
+
+type PenaltyWinnerSide = "home" | "away";
 
 type BetClient = Pick<typeof prisma, "match" | "bet" | "$transaction">;
 
@@ -49,7 +53,8 @@ export async function submitBets(
   const normalizedBets = bets.map((bet) => ({
     matchId: bet.matchId,
     homeScoreGuess: validateScore(bet.homeScoreGuess),
-    awayScoreGuess: validateScore(bet.awayScoreGuess)
+    awayScoreGuess: validateScore(bet.awayScoreGuess),
+    penaltyWinnerSide: normalizePenaltyWinnerSide(bet.penaltyWinnerSide)
   }));
 
   const matches = await client.match.findMany({
@@ -75,6 +80,15 @@ export async function submitBets(
     if (status === "closed") {
       throw new Error(stateMessages.closedToday);
     }
+
+    const isDrawGuess = bet.homeScoreGuess === bet.awayScoreGuess;
+    if (isDrawGuess && isKnockoutStage(match.stage)) {
+      if (!bet.penaltyWinnerSide) {
+        throw new Error("Se o palpite terminar empatado, escolha quem avança nos pênaltis.");
+      }
+    } else if (bet.penaltyWinnerSide) {
+      throw new Error("A escolha de pênaltis só pode ser usada em palpites empatados do mata-mata.");
+    }
   }
 
   try {
@@ -86,6 +100,8 @@ export async function submitBets(
             matchId: bet.matchId,
             homeScoreGuess: bet.homeScoreGuess,
             awayScoreGuess: bet.awayScoreGuess,
+            goesToPenalties: bet.homeScoreGuess === bet.awayScoreGuess && Boolean(bet.penaltyWinnerSide),
+            penaltyWinnerSide: bet.penaltyWinnerSide ?? null,
             submittedAt: now
           }
         })
@@ -98,4 +114,16 @@ export async function submitBets(
 
     throw error;
   }
+}
+
+function normalizePenaltyWinnerSide(value: unknown): PenaltyWinnerSide | null {
+  if (value === undefined || value === null || value === "") {
+    return null;
+  }
+
+  if (value === "home" || value === "away") {
+    return value;
+  }
+
+  throw new Error("Escolha de pênaltis inválida.");
 }

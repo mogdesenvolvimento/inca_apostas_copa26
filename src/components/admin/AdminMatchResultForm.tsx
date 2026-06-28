@@ -7,23 +7,30 @@ type Props = {
   matchId: string;
   homeTeam: string;
   awayTeam: string;
+  stage?: string | null;
   initialHomeScore: number | null;
   initialAwayScore: number | null;
+  initialPenaltyWinnerSide?: string | null;
 };
 
 export function AdminMatchResultForm({
   matchId,
   homeTeam,
   awayTeam,
+  stage,
   initialHomeScore,
-  initialAwayScore
+  initialAwayScore,
+  initialPenaltyWinnerSide
 }: Props) {
   const router = useRouter();
   const [homeScore, setHomeScore] = useState(initialHomeScore?.toString() ?? "");
   const [awayScore, setAwayScore] = useState(initialAwayScore?.toString() ?? "");
+  const [penaltyWinnerSide, setPenaltyWinnerSide] = useState(initialPenaltyWinnerSide ?? "");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const isKnockout = ["round_of_32", "round_of_16", "quarter_final", "semi_final", "final"].includes(stage ?? "group");
+  const shouldShowPenaltyChoice = isKnockout && homeScore !== "" && awayScore !== "" && homeScore === awayScore;
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -35,6 +42,11 @@ export function AdminMatchResultForm({
       return;
     }
 
+    if (shouldShowPenaltyChoice && !penaltyWinnerSide) {
+      setError("Selecione quem avançou nos pênaltis.");
+      return;
+    }
+
     setSubmitting(true);
     const response = await fetch(`/api/admin/matches/${encodeURIComponent(matchId)}`, {
       method: "POST",
@@ -43,7 +55,8 @@ export function AdminMatchResultForm({
       },
       body: JSON.stringify({
         officialScoreHome: Number(homeScore),
-        officialScoreAway: Number(awayScore)
+        officialScoreAway: Number(awayScore),
+        penaltyWinnerSide: shouldShowPenaltyChoice ? penaltyWinnerSide : null
       })
     });
     const data = await response.json();
@@ -92,6 +105,35 @@ export function AdminMatchResultForm({
           />
         </label>
       </div>
+
+      {shouldShowPenaltyChoice ? (
+        <div className="rounded-2xl border border-ink/10 bg-field p-4">
+          <p className="text-sm font-bold text-ink">Placar empatado no mata-mata</p>
+          <p className="mt-1 text-sm text-ink/65">Selecione quem avançou nos pênaltis para concluir a apuração.</p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <label className="flex items-center gap-3 rounded-2xl border border-ink/10 bg-white px-4 py-3">
+              <input
+                type="radio"
+                name="admin-penalty-winner"
+                value="home"
+                checked={penaltyWinnerSide === "home"}
+                onChange={(event) => setPenaltyWinnerSide(event.target.value)}
+              />
+              <span className="font-bold text-ink">{homeTeam}</span>
+            </label>
+            <label className="flex items-center gap-3 rounded-2xl border border-ink/10 bg-white px-4 py-3">
+              <input
+                type="radio"
+                name="admin-penalty-winner"
+                value="away"
+                checked={penaltyWinnerSide === "away"}
+                onChange={(event) => setPenaltyWinnerSide(event.target.value)}
+              />
+              <span className="font-bold text-ink">{awayTeam}</span>
+            </label>
+          </div>
+        </div>
+      ) : null}
 
       {message ? <p className="rounded-2xl bg-leaf/12 px-4 py-3 text-sm font-bold text-leaf">{message}</p> : null}
       {error ? <p className="rounded-2xl bg-wine/10 px-4 py-3 text-sm font-bold text-wine">{error}</p> : null}

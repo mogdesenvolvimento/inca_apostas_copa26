@@ -79,6 +79,9 @@ async function main() {
       status TEXT NOT NULL DEFAULT 'scheduled',
       officialScoreHome INTEGER,
       officialScoreAway INTEGER,
+      wentToPenalties BOOLEAN NOT NULL DEFAULT 0,
+      penaltyWinnerSide TEXT,
+      qualifiedTeam TEXT,
       resultRegisteredAt DATETIME,
       resultUpdatedAt DATETIME,
       isActive BOOLEAN NOT NULL DEFAULT 1,
@@ -113,6 +116,15 @@ async function main() {
   if (!matchColumns.includes("status")) {
     await prisma.$executeRawUnsafe(`ALTER TABLE Match ADD COLUMN status TEXT NOT NULL DEFAULT 'scheduled';`);
   }
+  if (!matchColumns.includes("wentToPenalties")) {
+    await prisma.$executeRawUnsafe(`ALTER TABLE Match ADD COLUMN wentToPenalties BOOLEAN NOT NULL DEFAULT 0;`);
+  }
+  if (!matchColumns.includes("penaltyWinnerSide")) {
+    await prisma.$executeRawUnsafe(`ALTER TABLE Match ADD COLUMN penaltyWinnerSide TEXT;`);
+  }
+  if (!matchColumns.includes("qualifiedTeam")) {
+    await prisma.$executeRawUnsafe(`ALTER TABLE Match ADD COLUMN qualifiedTeam TEXT;`);
+  }
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS Match_matchDate_idx ON Match(matchDate);`);
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS Match_groupName_idx ON Match(groupName);`);
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS Match_stage_idx ON Match(stage);`);
@@ -124,11 +136,20 @@ async function main() {
       matchId TEXT NOT NULL,
       homeScoreGuess INTEGER NOT NULL,
       awayScoreGuess INTEGER NOT NULL,
+      goesToPenalties BOOLEAN NOT NULL DEFAULT 0,
+      penaltyWinnerSide TEXT,
       submittedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
       CONSTRAINT Bet_participantId_fkey FOREIGN KEY (participantId) REFERENCES Participant(id) ON DELETE CASCADE ON UPDATE CASCADE,
       CONSTRAINT Bet_matchId_fkey FOREIGN KEY (matchId) REFERENCES Match(id) ON DELETE CASCADE ON UPDATE CASCADE
     );
   `);
+  const betColumns = (await prisma.$queryRawUnsafe<Array<{ name: string }>>(`PRAGMA table_info('Bet');`)).map((column) => column.name);
+  if (!betColumns.includes("goesToPenalties")) {
+    await prisma.$executeRawUnsafe(`ALTER TABLE Bet ADD COLUMN goesToPenalties BOOLEAN NOT NULL DEFAULT 0;`);
+  }
+  if (!betColumns.includes("penaltyWinnerSide")) {
+    await prisma.$executeRawUnsafe(`ALTER TABLE Bet ADD COLUMN penaltyWinnerSide TEXT;`);
+  }
   await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS Bet_participantId_matchId_key ON Bet(participantId, matchId);`);
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS Bet_matchId_idx ON Bet(matchId);`);
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS Bet_participantId_idx ON Bet(participantId);`);

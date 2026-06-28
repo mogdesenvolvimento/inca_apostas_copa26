@@ -8,6 +8,7 @@ type Body = {
     matchId: string;
     homeScoreGuess: unknown;
     awayScoreGuess: unknown;
+    penaltyWinnerSide?: unknown;
   }>;
 };
 

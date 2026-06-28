@@ -123,7 +123,11 @@ export default async function AdminMatchesPage({ searchParams }: Props) {
                               }`}
                             >
                               {hasOfficialResult
-                                ? `Resultado: ${match.officialScoreHome} x ${match.officialScoreAway}`
+                                ? `Resultado: ${match.officialScoreHome} x ${match.officialScoreAway}${
+                                    match.wentToPenalties && match.qualifiedTeam
+                                      ? ` | ${match.qualifiedTeam} nos pênaltis`
+                                      : ""
+                                  }`
                                 : "Aguardando resultado oficial"}
                             </span>
                           </div>

@@ -38,6 +38,9 @@ model Match {
   status           String    @default("scheduled")
   officialScoreHome Int?
   officialScoreAway Int?
+  wentToPenalties  Boolean   @default(false)
+  penaltyWinnerSide String?
+  qualifiedTeam    String?
   resultRegisteredAt DateTime?
   resultUpdatedAt  DateTime?
   isActive         Boolean   @default(true)
@@ -55,6 +58,8 @@ model Bet {
   matchId         String
   homeScoreGuess  Int
   awayScoreGuess  Int
+  goesToPenalties Boolean     @default(false)
+  penaltyWinnerSide String?
   submittedAt     DateTime    @default(now())
   participant     Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
   match           Match       @relation(fields: [matchId], references: [id], onDelete: Cascade)
