@@ -694,14 +694,14 @@ export function ApostasClient() {
 
       {showClassificationModal ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[#1F2A37]/48 px-4 py-6 backdrop-blur-[5px]"
+          className="fixed inset-0 z-50 overflow-y-auto bg-[#1F2A37]/48 px-4 py-4 backdrop-blur-[5px] sm:flex sm:items-center sm:justify-center sm:px-4 sm:py-6"
           onClick={() => setShowClassificationModal(false)}
         >
           <div
             role="dialog"
             aria-modal="true"
             aria-label="Minha Classificação"
-            className="relative w-full max-w-[540px] rounded-[1.75rem] border border-[#E9DCC0] bg-[#F8EFD9] p-5 shadow-[0_26px_70px_rgba(31,42,55,0.20)] sm:p-7"
+            className="relative mx-auto w-full max-w-[540px] rounded-[1.75rem] border border-[#E9DCC0] bg-[#F8EFD9] p-4 shadow-[0_26px_70px_rgba(31,42,55,0.20)] max-sm:my-4 max-sm:max-h-[calc(100dvh-2rem)] max-sm:overflow-y-auto sm:p-7"
             onClick={(event) => event.stopPropagation()}
           >
             <button
