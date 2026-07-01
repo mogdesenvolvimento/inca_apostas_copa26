@@ -219,8 +219,9 @@ function ClassificationModalPhaseContent({
                     </p>
                   </div>
 
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#E7DABF] bg-white text-xl font-bold text-ink transition group-open:rotate-45">
-                    +
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#E7DABF] bg-white text-xl font-bold text-ink">
+                    <span className="group-open:hidden">+</span>
+                    <span className="hidden group-open:inline">-</span>
                   </span>
                 </summary>
 
