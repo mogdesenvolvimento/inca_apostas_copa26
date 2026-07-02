@@ -72,6 +72,14 @@ const TIMEZONE_OVERRIDES = new Map<string, TimezoneOverride>([
       localTime: "20:00",
       brasiliaKickoffAt: new Date("2026-06-27T00:00:00-03:00")
     }
+  ],
+  [
+    "suica|argelia",
+    {
+      localDate: "2026-07-02",
+      localTime: "20:00",
+      brasiliaKickoffAt: new Date("2026-07-03T00:00:00-03:00")
+    }
   ]
 ]);
 

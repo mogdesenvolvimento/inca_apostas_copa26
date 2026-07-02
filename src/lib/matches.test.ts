@@ -18,11 +18,11 @@ const match = {
 };
 
 describe("isMatchAvailableForBet", () => {
-  it("permite aposta no dia do jogo até 10 minutos antes do início", () => {
+  it("permite aposta no dia do jogo ate 10 minutos antes do inicio", () => {
     expect(isMatchAvailableForBet(match, new Date("2026-06-11T15:50:00.000Z"))).toBe(true);
   });
 
-  it("bloqueia aposta após o cutoff", () => {
+  it("bloqueia aposta apos o cutoff", () => {
     expect(isMatchAvailableForBet(match, new Date("2026-06-11T15:51:00.000Z"))).toBe(false);
   });
 
@@ -30,13 +30,13 @@ describe("isMatchAvailableForBet", () => {
     expect(isMatchAvailableForBet(match, new Date("2026-06-12T12:00:00.000Z"))).toBe(false);
   });
 
-  it("mantém jogo com virada de fuso visível e aberto até o início oficial em Brasília", () => {
+  it("mantem jogo com virada de fuso visivel e aberto ate o inicio oficial em Brasilia", () => {
     const shiftedMatch = {
       matchDate: "2026-06-13",
       matchTime: "01:00",
       kickoffAt: new Date("2026-06-13T04:00:00.000Z"),
       isActive: true,
-      homeTeam: "Austrália",
+      homeTeam: "Australia",
       awayTeam: "Turquia"
     };
 
@@ -48,14 +48,14 @@ describe("isMatchAvailableForBet", () => {
     expect(isMatchAvailableForBet(shiftedMatch, new Date("2026-06-14T04:00:01.000Z"))).toBe(false);
   });
 
-  it("aplica a exceção de fuso para Tunísia x Japão mantendo a data local e o bloqueio em Brasília", () => {
+  it("aplica a excecao de fuso para Tunisia x Japao mantendo a data local e o bloqueio em Brasilia", () => {
     const shiftedMatch = {
       matchDate: "2026-06-21",
       matchTime: "01:00",
       kickoffAt: new Date("2026-06-21T04:00:00.000Z"),
       isActive: true,
-      homeTeam: "Tunísia",
-      awayTeam: "Japão"
+      homeTeam: "Tunisia",
+      awayTeam: "Japao"
     };
 
     expect(getMatchDisplayDate(shiftedMatch)).toBe("2026-06-20");
@@ -66,13 +66,31 @@ describe("isMatchAvailableForBet", () => {
     expect(isMatchAvailableForBet(shiftedMatch, new Date("2026-06-21T04:00:00.000Z"))).toBe(false);
   });
 
-  it("prioriza a data local da partida no calendário quando houver jogo carregado pela madrugada", () => {
+  it("aplica a excecao de fuso para Suica x Argelia mantendo a data local e o bloqueio em Brasilia", () => {
+    const shiftedMatch = {
+      matchDate: "2026-07-03",
+      matchTime: "00:00",
+      kickoffAt: new Date("2026-07-03T03:00:00.000Z"),
+      isActive: true,
+      homeTeam: "Suica",
+      awayTeam: "Argelia"
+    };
+
+    expect(getMatchDisplayDate(shiftedMatch)).toBe("2026-07-02");
+    expect(getMatchDisplayTime(shiftedMatch)).toBe("20:00");
+    expect(getMatchTimezoneNotice(shiftedMatch)).toContain("00:00 de 03/07/2026");
+    expect(isMatchAvailableForBet(shiftedMatch, new Date("2026-07-02T22:00:00.000Z"))).toBe(true);
+    expect(isMatchAvailableForBet(shiftedMatch, new Date("2026-07-03T02:59:59.000Z"))).toBe(true);
+    expect(isMatchAvailableForBet(shiftedMatch, new Date("2026-07-03T03:00:00.000Z"))).toBe(false);
+  });
+
+  it("prioriza a data local da partida no calendario quando houver jogo carregado pela madrugada", () => {
     const shiftedMatch = {
       matchDate: "2026-06-13",
       matchTime: "01:00",
       kickoffAt: new Date("2026-06-13T04:00:00.000Z"),
       isActive: true,
-      homeTeam: "Austrália",
+      homeTeam: "Australia",
       awayTeam: "Turquia"
     };
 
@@ -95,13 +113,13 @@ describe("isMatchAvailableForBet", () => {
     expect(result.matches[0]?.matchDate).toBe("2026-06-13");
   });
 
-  it("gera aviso de fuso horário apenas para jogos que avançam para o dia seguinte no Brasil", () => {
+  it("gera aviso de fuso horario apenas para jogos que avancam para o dia seguinte no Brasil", () => {
     const shiftedMatch = {
       matchDate: "2026-06-13",
       matchTime: "01:00",
       kickoffAt: new Date("2026-06-13T04:00:00.000Z"),
       isActive: true,
-      homeTeam: "Austrália",
+      homeTeam: "Australia",
       awayTeam: "Turquia"
     };
 
