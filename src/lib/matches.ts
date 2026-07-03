@@ -160,12 +160,8 @@ export function isMatchAvailableForBet(match: MatchScheduleContext, now = new Da
     return false;
   }
 
-  const today = getSaoPauloDateString(now);
-  const visibleToday = getMatchDisplayDate(match) === today;
-  const visibleAsCarryover = isCarryoverMatchVisible(match, now);
-
-  if (!visibleToday && !visibleAsCarryover) {
-    return false;
+  if (isMatchShiftedToNextDayInBrazil(match)) {
+    return now.getTime() < getMatchKickoffAtInBrasilia(match).getTime();
   }
 
   return now.getTime() <= getMatchBetDeadline(match).getTime();

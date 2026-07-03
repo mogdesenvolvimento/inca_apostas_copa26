@@ -26,7 +26,11 @@ describe("isMatchAvailableForBet", () => {
     expect(isMatchAvailableForBet(match, new Date("2026-06-11T15:51:00.000Z"))).toBe(false);
   });
 
-  it("bloqueia aposta fora do dia atual em America/Sao_Paulo", () => {
+  it("permite aposta em jogo futuro ate o horario limite", () => {
+    expect(isMatchAvailableForBet(match, new Date("2026-06-10T12:00:00.000Z"))).toBe(true);
+  });
+
+  it("bloqueia aposta depois que o jogo ja passou", () => {
     expect(isMatchAvailableForBet(match, new Date("2026-06-12T12:00:00.000Z"))).toBe(false);
   });
 
