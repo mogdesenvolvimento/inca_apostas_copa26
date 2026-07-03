@@ -58,11 +58,7 @@ export async function GET(request: Request) {
       })
     : [];
 
-  const hasOnlyFutureMatches = hasFilters && filteredMatches.length > 0 && filteredMatches.every((match) => getMatchDisplayDate(match) > today);
-
-  const scopedMatches = hasFilters
-    ? filteredMatches.filter((match) => getMatchDisplayDate(match) <= today)
-    : filterMatchesForCurrentBolaoWindow(allMatchesBase, now).matches;
+  const scopedMatches = hasFilters ? filteredMatches : filterMatchesForCurrentBolaoWindow(allMatchesBase, now).matches;
 
   const displayDate =
     hasFilters && selectedDate
@@ -87,9 +83,7 @@ export async function GET(request: Request) {
     message: hasFilters
       ? scopedMatches.length
         ? null
-        : hasOnlyFutureMatches
-          ? "Os jogos para esta data só estarão disponíveis para palpites no dia."
-          : "Nenhum jogo encontrado com os filtros atuais."
+        : "Nenhum jogo encontrado com os filtros atuais."
       : buildMatchesMessage(
           today,
           scopedMatches.length,
