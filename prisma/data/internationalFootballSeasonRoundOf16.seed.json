@@ -82,5 +82,33 @@
     "city": "Seattle",
     "country": "EUA",
     "status": "Aguardando"
+  },
+  {
+    "matchNumber": 95,
+    "stage": "round_of_16",
+    "group": "Oitavas de Final",
+    "matchDate": "2026-07-07",
+    "matchTime": "13:00",
+    "kickoffAt": "2026-07-07T13:00:00-03:00",
+    "homeTeam": "Argentina",
+    "awayTeam": "Egito",
+    "stadium": "Atlanta",
+    "city": "Atlanta",
+    "country": "EUA",
+    "status": "Aguardando"
+  },
+  {
+    "matchNumber": 96,
+    "stage": "round_of_16",
+    "group": "Oitavas de Final",
+    "matchDate": "2026-07-07",
+    "matchTime": "17:00",
+    "kickoffAt": "2026-07-07T17:00:00-03:00",
+    "homeTeam": "Suíça",
+    "awayTeam": "Colômbia",
+    "stadium": "Vancouver",
+    "city": "Vancouver",
+    "country": "Canadá",
+    "status": "Aguardando"
   }
 ]
