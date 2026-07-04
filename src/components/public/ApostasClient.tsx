@@ -106,6 +106,7 @@ function formatClassificationDistance(value: number) {
 function ClassificationModalPhaseContent({
   classificationAvailable,
   classificationSummary,
+  classificationStage,
   classificationStageLabel,
   classificationTop3Text,
   classificationLeaderText,
@@ -117,6 +118,7 @@ function ClassificationModalPhaseContent({
 }: {
   classificationAvailable: boolean;
   classificationSummary: ClassificationSummary | null;
+  classificationStage: string | null;
   classificationStageLabel: string;
   classificationTop3Text: string;
   classificationLeaderText: string;
@@ -131,7 +133,9 @@ function ClassificationModalPhaseContent({
       <div className="rounded-[1.35rem] bg-white px-5 py-4 text-center shadow-[0_8px_22px_rgba(31,42,55,0.08)]">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal">Fase em apuracao</p>
         <p className="mt-2 font-heading text-[clamp(1.15rem,3vw,1.5rem)] font-bold text-ink">
-          {currentClassificationPhase?.stageLabel ?? classificationStageLabel}
+          {currentClassificationPhase?.stageLabel ??
+            classificationPhaseCards.find((phase) => phase.stage === classificationStage)?.stageLabel ??
+            classificationStageLabel}
         </p>
       </div>
 
@@ -271,6 +275,7 @@ export function ApostasClient() {
   const [showAwardsModal, setShowAwardsModal] = useState(true);
   const [showClassificationModal, setShowClassificationModal] = useState(false);
   const [classificationAvailable, setClassificationAvailable] = useState(false);
+  const [classificationStage, setClassificationStage] = useState<string | null>(null);
   const [classificationStageLabel, setClassificationStageLabel] = useState("Fase atual");
   const [classificationSummary, setClassificationSummary] = useState<ClassificationSummary | null>(null);
   const [classificationPhases, setClassificationPhases] = useState<ClassificationPhaseSummary[]>([]);
@@ -337,6 +342,7 @@ export function ApostasClient() {
         setGroups(matchesData.groups);
         setMessage(matchesData.message);
         setClassificationAvailable(rankingData.available);
+        setClassificationStage(rankingData.stage ?? null);
         setClassificationStageLabel(rankingData.stageLabel || "Fase atual");
         setClassificationSummary(rankingData.summary);
         setClassificationPhases(rankingData.phases ?? []);
@@ -490,9 +496,9 @@ export function ApostasClient() {
     () =>
       classificationPhases.map((phase) => ({
         ...phase,
-        isCurrent: phase.stageLabel === classificationStageLabel
+        isCurrent: phase.stage === classificationStage
       })),
-    [classificationPhases, classificationStageLabel]
+    [classificationPhases, classificationStage]
   );
 
   const currentClassificationPhase = useMemo(
@@ -732,6 +738,7 @@ export function ApostasClient() {
             <ClassificationModalPhaseContent
               classificationAvailable={classificationAvailable}
               classificationSummary={classificationSummary}
+              classificationStage={classificationStage}
               classificationStageLabel={classificationStageLabel}
               classificationTop3Text={classificationTop3Text}
               classificationLeaderText={classificationLeaderText}
