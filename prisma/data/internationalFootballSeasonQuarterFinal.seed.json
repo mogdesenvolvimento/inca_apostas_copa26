@@ -1,0 +1,58 @@
+[
+  {
+    "matchNumber": 97,
+    "stage": "quarter_final",
+    "group": "Quartas de Final",
+    "matchDate": "2026-07-09",
+    "matchTime": "17:00",
+    "kickoffAt": "2026-07-09T17:00:00-03:00",
+    "homeTeam": "França",
+    "awayTeam": "Marrocos",
+    "stadium": "Boston",
+    "city": "Boston",
+    "country": "EUA",
+    "status": "Aguardando"
+  },
+  {
+    "matchNumber": 98,
+    "stage": "quarter_final",
+    "group": "Quartas de Final",
+    "matchDate": "2026-07-10",
+    "matchTime": "16:00",
+    "kickoffAt": "2026-07-10T16:00:00-03:00",
+    "homeTeam": "Espanha",
+    "awayTeam": "Bélgica",
+    "stadium": "Los Angeles",
+    "city": "Los Angeles",
+    "country": "EUA",
+    "status": "Aguardando"
+  },
+  {
+    "matchNumber": 99,
+    "stage": "quarter_final",
+    "group": "Quartas de Final",
+    "matchDate": "2026-07-11",
+    "matchTime": "18:00",
+    "kickoffAt": "2026-07-11T18:00:00-03:00",
+    "homeTeam": "Noruega",
+    "awayTeam": "Inglaterra",
+    "stadium": "Miami",
+    "city": "Miami",
+    "country": "EUA",
+    "status": "Aguardando"
+  },
+  {
+    "matchNumber": 100,
+    "stage": "quarter_final",
+    "group": "Quartas de Final",
+    "matchDate": "2026-07-11",
+    "matchTime": "22:00",
+    "kickoffAt": "2026-07-11T22:00:00-03:00",
+    "homeTeam": "Argentina",
+    "awayTeam": "Suíça",
+    "stadium": "Kansas City",
+    "city": "Kansas City",
+    "country": "EUA",
+    "status": "Aguardando"
+  }
+]
