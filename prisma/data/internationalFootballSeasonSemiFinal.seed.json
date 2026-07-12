@@ -1,0 +1,30 @@
+[
+  {
+    "matchNumber": 101,
+    "stage": "semi_final",
+    "group": "Semifinais",
+    "matchDate": "2026-07-14",
+    "matchTime": "16:00",
+    "kickoffAt": "2026-07-14T16:00:00-03:00",
+    "homeTeam": "França",
+    "awayTeam": "Espanha",
+    "stadium": "Dallas",
+    "city": "Dallas",
+    "country": "EUA",
+    "status": "Aguardando"
+  },
+  {
+    "matchNumber": 102,
+    "stage": "semi_final",
+    "group": "Semifinais",
+    "matchDate": "2026-07-15",
+    "matchTime": "16:00",
+    "kickoffAt": "2026-07-15T16:00:00-03:00",
+    "homeTeam": "Inglaterra",
+    "awayTeam": "Argentina",
+    "stadium": "Atlanta",
+    "city": "Atlanta",
+    "country": "EUA",
+    "status": "Aguardando"
+  }
+]

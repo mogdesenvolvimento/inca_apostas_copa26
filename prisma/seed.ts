@@ -76,7 +76,8 @@ async function main() {
     ...loadMatches("internationalFootballSeasonGroupStage.seed.json"),
     ...loadMatches("internationalFootballSeasonRoundOf32.seed.json"),
     ...loadMatches("internationalFootballSeasonRoundOf16.seed.json"),
-    ...loadMatches("internationalFootballSeasonQuarterFinal.seed.json")
+    ...loadMatches("internationalFootballSeasonQuarterFinal.seed.json"),
+    ...loadMatches("internationalFootballSeasonSemiFinal.seed.json")
   ];
 
   const existingAdmin = await prisma.adminUser.findUnique({
