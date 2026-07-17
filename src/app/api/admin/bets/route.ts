@@ -4,7 +4,7 @@ import { buildParticipantRanking, getWinnersForMatch, hasOfficialResult } from "
 import { attachMatchResults } from "@/lib/admin-results-db";
 import { normalizeCpf } from "@/lib/cpf";
 import { jsonError } from "@/lib/http";
-import { resolveCurrentCompetitiveStage } from "@/lib/match-stages";
+import { isCompetitiveStage } from "@/lib/match-stages";
 import { normalizePhone } from "@/lib/phone";
 import { prisma } from "@/lib/prisma";
 
@@ -81,9 +81,8 @@ export async function GET(request: Request) {
       attachMatchResults(allMatchesBase)
     ]);
 
-    const currentStage = resolveCurrentCompetitiveStage(allMatches);
-    const stageMatches = currentStage ? allMatches.filter((match) => (match.stage ?? "group") === currentStage) : allMatches;
-    const matchesWithResults = stageMatches.filter((match) => hasOfficialResult(match));
+    const competitiveMatches = allMatches.filter((match) => isCompetitiveStage(match.stage ?? "group"));
+    const matchesWithResults = competitiveMatches.filter((match) => hasOfficialResult(match));
     const ranking = buildParticipantRanking(matchesWithResults);
 
     const sections = [

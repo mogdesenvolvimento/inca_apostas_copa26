@@ -29,7 +29,9 @@ export function AdminMatchResultForm({
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const isKnockout = ["round_of_32", "round_of_16", "quarter_final", "semi_final", "final"].includes(stage ?? "group");
+  const isKnockout = ["round_of_32", "round_of_16", "quarter_final", "semi_final", "bronze_final", "final"].includes(
+    stage ?? "group"
+  );
   const shouldShowPenaltyChoice = isKnockout && homeScore !== "" && awayScore !== "" && homeScore === awayScore;
 
   async function onSubmit(event: FormEvent) {

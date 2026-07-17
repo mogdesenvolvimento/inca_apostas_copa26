@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getStageLabel, resolveCurrentCompetitiveStage } from "@/lib/match-stages";
+import { getStageLabel, resolveCurrentCompetitiveStage, resolveCurrentIndividualRankingStage } from "@/lib/match-stages";
 
 describe("match stages", () => {
   it("retorna o rotulo esperado para 16 avos", () => {
@@ -40,5 +40,22 @@ describe("match stages", () => {
     );
 
     expect(stage).toBe("quarter_final");
+  });
+
+  it("retorna o rotulo esperado para disputa pelo bronze", () => {
+    expect(getStageLabel("bronze_final")).toBe("Disputa pelo bronze");
+  });
+
+  it("mantem o ranking individual encerrado nas semifinais mesmo com bronze e final na agenda", () => {
+    const stage = resolveCurrentIndividualRankingStage(
+      [
+        { stage: "semi_final", matchDate: "2026-07-15", kickoffAt: new Date("2026-07-15T19:00:00.000Z") },
+        { stage: "bronze_final", matchDate: "2026-07-18", kickoffAt: new Date("2026-07-18T21:00:00.000Z") },
+        { stage: "final", matchDate: "2026-07-19", kickoffAt: new Date("2026-07-19T19:00:00.000Z") }
+      ],
+      new Date("2026-07-17T15:00:00.000Z")
+    );
+
+    expect(stage).toBe("semi_final");
   });
 });

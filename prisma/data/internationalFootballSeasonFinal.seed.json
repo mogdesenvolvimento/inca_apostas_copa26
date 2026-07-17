@@ -1,0 +1,30 @@
+[
+  {
+    "matchNumber": 103,
+    "stage": "bronze_final",
+    "group": "Disputa pelo bronze",
+    "matchDate": "2026-07-18",
+    "matchTime": "18:00",
+    "kickoffAt": "2026-07-18T18:00:00-03:00",
+    "homeTeam": "França",
+    "awayTeam": "Inglaterra",
+    "stadium": "Miami",
+    "city": "Miami",
+    "country": "EUA",
+    "status": "Aguardando"
+  },
+  {
+    "matchNumber": 104,
+    "stage": "final",
+    "group": "Final",
+    "matchDate": "2026-07-19",
+    "matchTime": "16:00",
+    "kickoffAt": "2026-07-19T16:00:00-03:00",
+    "homeTeam": "Espanha",
+    "awayTeam": "Argentina",
+    "stadium": "Nova York / Nova Jersey",
+    "city": "Nova York / Nova Jersey",
+    "country": "EUA",
+    "status": "Aguardando"
+  }
+]

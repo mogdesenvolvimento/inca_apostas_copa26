@@ -557,7 +557,7 @@ export function ApostasClient() {
         continue;
       }
 
-      const isKnockout = ["round_of_32", "round_of_16", "quarter_final", "semi_final", "final"].includes(
+      const isKnockout = ["round_of_32", "round_of_16", "quarter_final", "semi_final", "bronze_final", "final"].includes(
         match.stage ?? "group"
       );
       const isDraw = current.home === current.away;
@@ -576,7 +576,7 @@ export function ApostasClient() {
           return null;
         }
 
-        const isKnockout = ["round_of_32", "round_of_16", "quarter_final", "semi_final", "final"].includes(
+        const isKnockout = ["round_of_32", "round_of_16", "quarter_final", "semi_final", "bronze_final", "final"].includes(
           match.stage ?? "group"
         );
         const isDraw = current.home === current.away;

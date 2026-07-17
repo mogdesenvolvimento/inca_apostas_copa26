@@ -108,7 +108,9 @@ export function isWinningBet(
 
   const officialIsDraw = match.officialScoreHome === match.officialScoreAway;
   const betIsDraw = bet.homeScoreGuess === bet.awayScoreGuess;
-  const isKnockout = ["round_of_32", "round_of_16", "quarter_final", "semi_final", "final"].includes(match.stage ?? "group");
+  const isKnockout = ["round_of_32", "round_of_16", "quarter_final", "semi_final", "bronze_final", "final"].includes(
+    match.stage ?? "group"
+  );
 
   if (!isKnockout) {
     return bet.homeScoreGuess === match.officialScoreHome && bet.awayScoreGuess === match.officialScoreAway;

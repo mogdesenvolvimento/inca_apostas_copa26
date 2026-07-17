@@ -28,7 +28,7 @@ function loadMatches(fileName: string): SeedMatch[] {
 }
 
 function isKnockoutStage(stage: string) {
-  return ["round_of_32", "round_of_16", "quarter_final", "semi_final", "final"].includes(stage);
+  return ["round_of_32", "round_of_16", "quarter_final", "semi_final", "bronze_final", "final"].includes(stage);
 }
 
 function buildMatchId(match: SeedMatch) {
@@ -49,6 +49,8 @@ function getStageLabel(match: SeedMatch) {
       return "Quartas de Final";
     case "semi_final":
       return "Semifinais";
+    case "bronze_final":
+      return "Disputa pelo bronze";
     case "final":
       return "Final";
     default:
@@ -77,7 +79,8 @@ async function main() {
     ...loadMatches("internationalFootballSeasonRoundOf32.seed.json"),
     ...loadMatches("internationalFootballSeasonRoundOf16.seed.json"),
     ...loadMatches("internationalFootballSeasonQuarterFinal.seed.json"),
-    ...loadMatches("internationalFootballSeasonSemiFinal.seed.json")
+    ...loadMatches("internationalFootballSeasonSemiFinal.seed.json"),
+    ...loadMatches("internationalFootballSeasonFinal.seed.json")
   ];
 
   const existingAdmin = await prisma.adminUser.findUnique({

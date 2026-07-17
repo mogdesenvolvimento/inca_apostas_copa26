@@ -10,7 +10,8 @@ import {
   getStageLabel,
   getStageOrder,
   isCompetitiveStage,
-  resolveCurrentCompetitiveStage
+  isIndividualRankingStage,
+  resolveCurrentIndividualRankingStage
 } from "@/lib/match-stages";
 import { filterMatchesForCurrentBolaoWindow, getMatchDisplayTime } from "@/lib/matches";
 import { formatPhoneBR } from "@/lib/phone";
@@ -59,7 +60,7 @@ export default async function AdminDashboardPage() {
   ]);
 
   const visibleMatches = filterMatchesForCurrentBolaoWindow(dashboardMatches).matches;
-  const currentStage = resolveCurrentCompetitiveStage(allMatches);
+  const currentStage = resolveCurrentIndividualRankingStage(allMatches);
   const currentStageMatches = currentStage
     ? allMatches.filter((match) => (match.stage ?? "group") === currentStage)
     : allMatches;
@@ -76,7 +77,7 @@ export default async function AdminDashboardPage() {
   const stageSections: DashboardSection[] = competitiveMatches
     .reduce<string[]>((stages, match) => {
       const stage = match.stage ?? "group";
-      if (!stages.includes(stage)) stages.push(stage);
+      if (isIndividualRankingStage(stage) && !stages.includes(stage)) stages.push(stage);
       return stages;
     }, [])
     .sort((stageA, stageB) => getStageOrder(stageA) - getStageOrder(stageB))
