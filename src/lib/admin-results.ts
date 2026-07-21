@@ -2,6 +2,7 @@ type ParticipantSummary = {
   id: string;
   name: string;
   cpf: string;
+  email?: string | null;
   phone: string;
   registrationCode: string;
 };
@@ -39,6 +40,7 @@ export type MatchWinner = {
   participantId: string;
   name: string;
   cpf: string;
+  email?: string | null;
   phone: string;
   registrationCode: string;
   homeScoreGuess: number;
@@ -53,6 +55,7 @@ export type ParticipantRankingItem = {
   participantId: string;
   name: string;
   cpf: string;
+  email?: string | null;
   phone: string;
   registrationCode: string;
   correctCount: number;
@@ -85,6 +88,7 @@ export function getWinnersForMatch(match: MatchResultSummary): MatchWinner[] {
       participantId: bet.participant.id,
       name: bet.participant.name,
       cpf: bet.participant.cpf,
+      email: bet.participant.email ?? null,
       phone: bet.participant.phone,
       registrationCode: bet.participant.registrationCode,
       homeScoreGuess: bet.homeScoreGuess,
@@ -141,6 +145,7 @@ export function buildParticipantRanking(matches: MatchResultSummary[]): Particip
       participantId: string;
       name: string;
       cpf: string;
+      email?: string | null;
       phone: string;
       registrationCode: string;
       correctCount: number;
@@ -159,6 +164,7 @@ export function buildParticipantRanking(matches: MatchResultSummary[]): Particip
         participantId: winner.participantId,
         name: winner.name,
         cpf: winner.cpf,
+        email: winner.email ?? null,
         phone: winner.phone,
         registrationCode: winner.registrationCode,
         correctCount: 1
@@ -185,6 +191,7 @@ export function buildParticipantRanking(matches: MatchResultSummary[]): Particip
       participantId: item.participantId,
       name: item.name,
       cpf: item.cpf,
+      email: item.email ?? null,
       phone: item.phone,
       registrationCode: item.registrationCode,
       correctCount: item.correctCount

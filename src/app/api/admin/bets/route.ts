@@ -4,7 +4,7 @@ import { buildParticipantRanking, getWinnersForMatch, hasOfficialResult } from "
 import { attachMatchResults } from "@/lib/admin-results-db";
 import { normalizeCpf } from "@/lib/cpf";
 import { jsonError } from "@/lib/http";
-import { isCompetitiveStage } from "@/lib/match-stages";
+import { getStageLabel, getStageOrder, isCompetitiveStage, isIndividualRankingStage } from "@/lib/match-stages";
 import { normalizePhone } from "@/lib/phone";
 import { prisma } from "@/lib/prisma";
 
@@ -20,6 +20,7 @@ export async function GET(request: Request) {
   const matchId = searchParams.get("matchId") ?? undefined;
   const search = searchParams.get("search")?.trim() ?? "";
   const exportCsv = searchParams.get("export") === "csv";
+  const exportPhaseSummaryCsv = searchParams.get("export") === "phase-summary";
   const searchCpf = normalizeCpf(search);
   const searchPhone = normalizePhone(search);
   const searchCode = search.toUpperCase();
@@ -50,8 +51,8 @@ export async function GET(request: Request) {
     orderBy: { submittedAt: "desc" }
   });
 
-  if (exportCsv) {
-    const [filteredMatchesBase, allMatchesBase] = await Promise.all([
+  if (exportCsv || exportPhaseSummaryCsv) {
+    const [filteredMatchesBase, allMatchesBase, participants] = await Promise.all([
       prisma.match.findMany({
         where: {
           id: matchId,
@@ -73,6 +74,9 @@ export async function GET(request: Request) {
           }
         },
         orderBy: [{ matchDate: "asc" }, { kickoffAt: "asc" }]
+      }),
+      prisma.participant.findMany({
+        orderBy: { name: "asc" }
       })
     ]);
 
@@ -85,16 +89,101 @@ export async function GET(request: Request) {
     const matchesWithResults = competitiveMatches.filter((match) => hasOfficialResult(match));
     const ranking = buildParticipantRanking(matchesWithResults);
 
+    if (exportPhaseSummaryCsv) {
+      const individualStages = Array.from(
+        new Set(competitiveMatches.map((match) => match.stage ?? "group").filter((stage) => isIndividualRankingStage(stage)))
+      ).sort((a, b) => getStageOrder(a) - getStageOrder(b));
+
+      const winnersByPhaseRows = individualStages.flatMap((stage) => {
+        const stageLabel = getStageLabel(stage);
+        const stageMatches = competitiveMatches.filter((match) => (match.stage ?? "group") === stage);
+        const stageRanking = buildParticipantRanking(stageMatches.filter((match) => hasOfficialResult(match)));
+
+        return stageRanking
+          .filter((item) => item.position === 1)
+          .map((item) =>
+            [
+              stageLabel,
+              item.position,
+              item.name,
+              item.registrationCode,
+              item.cpf,
+              item.phone,
+              item.email ?? "",
+              item.correctCount
+            ]
+              .map((value) => csvCell(String(value)))
+              .join(",")
+          );
+      });
+
+      const scoreByPhaseRows = individualStages.flatMap((stage) => {
+        const stageLabel = getStageLabel(stage);
+        const stageMatches = competitiveMatches.filter((match) => (match.stage ?? "group") === stage);
+        const stageRanking = buildParticipantRanking(stageMatches.filter((match) => hasOfficialResult(match)));
+        const rankingByParticipantId = new Map(stageRanking.map((item) => [item.participantId, item]));
+
+        return participants.map((participant) => {
+          const score = rankingByParticipantId.get(participant.id);
+
+          return [
+            stageLabel,
+            participant.name,
+            participant.registrationCode,
+            participant.cpf,
+            participant.phone,
+            participant.email ?? "",
+            score?.position ?? "",
+            score?.correctCount ?? 0
+          ]
+            .map((value) => csvCell(String(value)))
+            .join(",");
+        });
+      });
+
+      const overallRankingRows = ranking.map((item) =>
+        [item.position, item.name, item.registrationCode, item.cpf, item.phone, item.email ?? "", item.correctCount]
+          .map((value) => csvCell(String(value)))
+          .join(",")
+      );
+
+      const sections = [
+        buildCsvSection(
+          "vencedores_por_fase",
+          "fase,posicao,nome,codigo,cpf,telefone,email,acertos",
+          winnersByPhaseRows
+        ),
+        buildCsvSection(
+          "pontuacao_por_fase",
+          "fase,nome,codigo,cpf,telefone,email,posicao,acertos",
+          scoreByPhaseRows
+        ),
+        buildCsvSection(
+          "ranking_geral_de_acertos",
+          "posicao,nome,codigo,cpf,telefone,email,total_acertos",
+          overallRankingRows
+        )
+      ].filter(Boolean);
+
+      return new NextResponse(sections.join("\n\n"), {
+        headers: {
+          "Content-Type": "text/csv; charset=utf-8",
+          "Content-Disposition": 'attachment; filename="ranking-por-fase.csv"'
+        }
+      });
+    }
+
     const sections = [
       buildCsvSection(
         "apostas",
-        "codigo,nome,cpf,telefone,grupo,confronto,placar,data_envio",
+        "codigo,nome,cpf,telefone,email,grupo,confronto,placar,data_envio",
         bets.map((bet) =>
           [
             bet.participant.registrationCode,
             bet.participant.name,
             bet.participant.cpf,
             bet.participant.phone,
+            bet.participant.email ?? "",
             bet.match.groupName,
             `${bet.match.homeTeam} x ${bet.match.awayTeam}`,
             formatBetGuess(bet.homeScoreGuess, bet.awayScoreGuess, bet.penaltyWinnerSide, bet.match.homeTeam, bet.match.awayTeam),
@@ -128,7 +217,7 @@ export async function GET(request: Request) {
       ),
       buildCsvSection(
         "acertadores_por_jogo",
-        "grupo,data,hora,confronto,codigo,nome,cpf,telefone,placar_enviado,horario_envio",
+        "grupo,data,hora,confronto,codigo,nome,cpf,telefone,email,placar_enviado,horario_envio",
         filteredMatches.flatMap((match) =>
           getWinnersForMatch(match).map((winner) =>
             [
@@ -140,6 +229,7 @@ export async function GET(request: Request) {
               winner.name,
               winner.cpf,
               winner.phone,
+              winner.email ?? "",
               formatBetGuess(
                 winner.homeScoreGuess,
                 winner.awayScoreGuess,
@@ -156,9 +246,9 @@ export async function GET(request: Request) {
       ),
       buildCsvSection(
         "ranking_geral_de_acertos",
-        "posicao,nome,cpf,telefone,codigo,total_acertos",
+        "posicao,nome,cpf,telefone,email,codigo,total_acertos",
         ranking.map((item) =>
-          [item.position, item.name, item.cpf, item.phone, item.registrationCode, item.correctCount]
+          [item.position, item.name, item.cpf, item.phone, item.email ?? "", item.registrationCode, item.correctCount]
             .map((value) => csvCell(String(value)))
             .join(",")
         )

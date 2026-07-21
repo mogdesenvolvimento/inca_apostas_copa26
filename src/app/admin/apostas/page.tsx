@@ -60,6 +60,9 @@ export default async function AdminBetsPage({ searchParams }: Props) {
   if (search) query.set("search", search);
   query.set("export", "csv");
 
+  const phaseSummaryQuery = new URLSearchParams();
+  phaseSummaryQuery.set("export", "phase-summary");
+
   return (
     <div className="min-h-screen overflow-x-hidden">
       <AdminNav adminName={admin.name} />
@@ -70,12 +73,20 @@ export default async function AdminBetsPage({ searchParams }: Props) {
               <h1 className="font-beyno text-4xl text-ink">{adminCopy.bets.title}</h1>
               <p className="text-ink/65">{adminCopy.bets.subtitle}</p>
             </div>
-            <a
-              href={`/api/admin/bets?${query.toString()}`}
-              className="w-full rounded-2xl bg-leaf px-4 py-3 text-center font-bold text-white sm:w-auto"
-            >
-              {adminCopy.bets.export}
-            </a>
+            <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+              <a
+                href={`/api/admin/bets?${query.toString()}`}
+                className="w-full rounded-2xl bg-leaf px-4 py-3 text-center font-bold text-white sm:w-auto"
+              >
+                {adminCopy.bets.export}
+              </a>
+              <a
+                href={`/api/admin/bets?${phaseSummaryQuery.toString()}`}
+                className="w-full rounded-2xl bg-ink px-4 py-3 text-center font-bold text-white sm:w-auto"
+              >
+                Exportar ranking por fase
+              </a>
+            </div>
           </div>
 
           <form className="grid min-w-0 gap-3 rounded-[1.75rem] bg-white/85 p-4 shadow-card sm:p-5 md:grid-cols-5">
