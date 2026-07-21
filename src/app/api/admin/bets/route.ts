@@ -52,7 +52,7 @@ export async function GET(request: Request) {
   });
 
   if (exportCsv || exportPhaseSummaryCsv) {
-    const [filteredMatchesBase, allMatchesBase, participants] = await Promise.all([
+    const [filteredMatchesBase, allMatchesBase] = await Promise.all([
       prisma.match.findMany({
         where: {
           id: matchId,
@@ -74,9 +74,6 @@ export async function GET(request: Request) {
           }
         },
         orderBy: [{ matchDate: "asc" }, { kickoffAt: "asc" }]
-      }),
-      prisma.participant.findMany({
-        orderBy: { name: "asc" }
       })
     ]);
 
@@ -94,73 +91,43 @@ export async function GET(request: Request) {
         new Set(competitiveMatches.map((match) => match.stage ?? "group").filter((stage) => isIndividualRankingStage(stage)))
       ).sort((a, b) => getStageOrder(a) - getStageOrder(b));
 
-      const winnersByPhaseRows = individualStages.flatMap((stage) => {
+      const podiumByPhaseRows = individualStages.flatMap((stage) => {
         const stageLabel = getStageLabel(stage);
         const stageMatches = competitiveMatches.filter((match) => (match.stage ?? "group") === stage);
         const stageRanking = buildParticipantRanking(stageMatches.filter((match) => hasOfficialResult(match)));
 
         return stageRanking
-          .filter((item) => item.position === 1)
+          .filter((item) => item.position >= 1 && item.position <= 3)
           .map((item) =>
             [
               stageLabel,
               item.position,
               item.name,
-              item.registrationCode,
-              item.cpf,
               item.phone,
-              item.email ?? "",
-              item.correctCount
+              item.email ?? ""
             ]
               .map((value) => csvCell(String(value)))
               .join(",")
           );
       });
 
-      const scoreByPhaseRows = individualStages.flatMap((stage) => {
-        const stageLabel = getStageLabel(stage);
-        const stageMatches = competitiveMatches.filter((match) => (match.stage ?? "group") === stage);
-        const stageRanking = buildParticipantRanking(stageMatches.filter((match) => hasOfficialResult(match)));
-        const rankingByParticipantId = new Map(stageRanking.map((item) => [item.participantId, item]));
-
-        return participants.map((participant) => {
-          const score = rankingByParticipantId.get(participant.id);
-
-          return [
-            stageLabel,
-            participant.name,
-            participant.registrationCode,
-            participant.cpf,
-            participant.phone,
-            participant.email ?? "",
-            score?.position ?? "",
-            score?.correctCount ?? 0
-          ]
-            .map((value) => csvCell(String(value)))
-            .join(",");
-        });
-      });
-
-      const overallRankingRows = ranking.map((item) =>
-        [item.position, item.name, item.registrationCode, item.cpf, item.phone, item.email ?? "", item.correctCount]
+      const overallRankingRows = ranking
+        .filter((item) => item.position >= 1 && item.position <= 3)
+        .map((item) =>
+          [item.position, item.name, item.phone, item.email ?? ""]
           .map((value) => csvCell(String(value)))
           .join(",")
-      );
+        );
 
       const sections = [
         buildCsvSection(
-          "vencedores_por_fase",
-          "fase,posicao,nome,codigo,cpf,telefone,email,acertos",
-          winnersByPhaseRows
+          "colocados_por_fase",
+          "fase,posicao,nome,telefone,email",
+          podiumByPhaseRows
         ),
         buildCsvSection(
-          "pontuacao_por_fase",
-          "fase,nome,codigo,cpf,telefone,email,posicao,acertos",
-          scoreByPhaseRows
-        ),
-        buildCsvSection(
-          "ranking_geral_de_acertos",
-          "posicao,nome,codigo,cpf,telefone,email,total_acertos",
+          "ranking_geral_final",
+          "posicao,nome,telefone,email",
           overallRankingRows
         )
       ].filter(Boolean);
@@ -168,7 +135,7 @@ export async function GET(request: Request) {
       return new NextResponse(sections.join("\n\n"), {
         headers: {
           "Content-Type": "text/csv; charset=utf-8",
-          "Content-Disposition": 'attachment; filename="ranking-por-fase.csv"'
+          "Content-Disposition": 'attachment; filename="colocados-por-fase-e-geral.csv"'
         }
       });
     }
